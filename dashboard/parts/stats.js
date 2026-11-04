@@ -2,7 +2,7 @@
 S.er=S.er||{}; S.stats=S.stats||{};
 S.ui.st={month:null, div:"education", insp:"all", res:"all", log:false};
 const ER_LIB="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-const DIVISIONS=[["education","Education",true],["county","County Operations",false],["oper","Operational Permits",false],["general","General Occupancies",false],["serg","SERG",false]];
+const DIVISIONS=[["education","Education",true],["county","County Operations",true],["oper","Operational Permits",false],["general","General Occupancies",false],["serg","SERG",false]];
 const MON3=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 /* Board layout: mirrors the Education sheet of the monthly stats workbook. r = workbook row. er = Emergency Reporting inspection types that fill the line. */
 const BOARD=[
@@ -56,7 +56,7 @@ const BOARD=[
   {k:"fss1",r:56,label:"Tririga work requests received",manual:true,lvl:2,grp:"fss"},
   {k:"fss2",r:57,label:"Tririga work requests cleared",manual:true,lvl:2,grp:"fss"},
   {k:"fss3",r:58,label:"Site Visit",manual:true,lvl:2,grp:"fss"},
-  {k:"fss4",r:59,label:"Inspections",manual:true,lvl:2,grp:"fss"},
+  {k:"fss4",r:59,label:"Inspections",manual:true,er:[],erDiv:"county",lvl:2,grp:"fss"},
   {k:"fss5",r:60,label:"On call",manual:true,lvl:2,grp:"fss"},
   {k:"fss6",r:61,label:"Other request",manual:true,lvl:2,grp:"fss"},
   {k:"boarding",r:63,label:"Boarding Homes Activities",sum:["bh1","bh2","bh3","bh4","bh5"],lvl:0,grp:"boarding"},
@@ -125,8 +125,12 @@ function erFacFor(M,x){ const b=BROW[x.row]||{}; if(b.rot==="daycare") return be
 const ERFAC={rev:-1,m:{}};
 function erLive(r){ if(ERFAC.rev!==S._rev){ ERFAC.rev=S._rev; ERFAC.m={}; } if(r.rot) return r;
   if(!(r.k in ERFAC.m)){ const f=erFacFor(model(),r); ERFAC.m[r.k]=f?[f.id,f.orgId]:[null,null]; } const [fac,org]=ERFAC.m[r.k]; return fac===r.fac?r:Object.assign({},r,{fac,org}); }
+/* County: inspectors' 233 work keeps its 233 line, everything else is County Buildings Annual; FSS specialists' inspections are FSS Activities, Inspections */
+function erRowForPerson(type,insp){ const row=erRowFor(type); const tid=teamIdFor(erPersonName(insp)); const t=tid&&S.team[tid]; if(!t||divOf(t)!=="county") return row;
+  if(t.role==="specialist") return "fss4"; return /^\s*233/.test(type)?row:"county"; }
+const erDivFor=team=>team&&S.team[team]?divOf(S.team[team]):"education";
 function erPlan(P){ const M=model();
-  P.rows.forEach(x=>{ const b=BROW[x.row]||{};
+  P.rows.forEach(x=>{ x.row=erRowForPerson(x.type,x.insp); const b=BROW[x.row]||{};
     const f=erFacFor(M,x); x.fac=f?f.id:null; x.org=f?f.orgId:null;
     x.rotation=!!(f&&b.rot); x.include=x.rotation; }); }
 
@@ -177,7 +181,7 @@ async function erSave(){
       notes:`${x.type} · ${x.id}`,source:"Emergency Reporting",erKey:x.k,loggedBy:S.me.id||undefined,loggedAt:now};
     Object.keys(rec).forEach(k=>rec[k]===undefined&&delete rec[k]); vlist.push({orgId:x.org,year:yearOf(x.date),vid:uid("e"),rec}); }));
   const ok=await write(async()=>{ for(const g of groups){ const P=ERI.files.find(p=>p.rows.includes(g.rows[0]));
-      await S.db.doc("er/"+g.id).set({division:"education",month:g.month,inspector:g.team||null,inspectorName:g.inspName,file:P.file,period:{start:P.start,end:P.end},importedAt:now,importedBy:S.me.id||null,importedByName:S.me.name||"",rows:g.rows.map(keep)}); }
+      await S.db.doc("er/"+g.id).set({division:erDivFor(g.team),month:g.month,inspector:g.team||null,inspectorName:g.inspName,file:P.file,period:{start:P.start,end:P.end},importedAt:now,importedBy:S.me.id||null,importedByName:S.me.name||"",rows:g.rows.map(keep)}); }
     if(vlist.length) await saveVisits(vlist); },`Saved ${groups.reduce((s,g)=>s+g.rows.length,0)} inspections${vlist.length?` and ${vlist.length} school visits`:""}`);
   if(ok){ const mo=groups.map(g=>g.month).sort().pop(); if(mo) S.ui.st.month=mo; ERI=null; closeModal(); if(location.hash!=="#stats") location.hash="stats"; else render(); } }
 
@@ -189,11 +193,11 @@ function erDocsFor(month,div){ return Object.entries(S.er).filter(([,d])=>d.mont
 function yearGrid(div,year){
   const D=statDoc(div,year), out={v:{},src:{},board:{},er:{}};
   for(let i=0;i<12;i++){ const mo=`${year}-${String(i+1).padStart(2,"0")}`, mm=mo.slice(5); const ers=erRowsFor(mo,div); const hasER=ers.length>0;
-    const cnt={}; ers.forEach(r=>{ if(r.row) cnt[r.row]=(cnt[r.row]||0)+1; }); const tl=teamLogSums(mo), ac=actionSums(mo,div);
+    const cnt={}; ers.forEach(r=>{ if(r.row) cnt[r.row]=(cnt[r.row]||0)+1; }); const tl=div==="education"?teamLogSums(mo):{any:false,k:{}}, ac=actionSums(mo,div);
     BOARD.filter(b=>!b.sum).forEach(b=>{ const bv=D.board&&D.board[b.k]&&D.board[b.k][mm]; const mv=D.manual&&D.manual[b.k]&&D.manual[b.k][mm];
-      (out.board[b.k]=out.board[b.k]||[])[i]=bv??null; (out.er[b.k]=out.er[b.k]||[])[i]=hasER&&b.er?(cnt[b.k]||0):null;
+      (out.board[b.k]=out.board[b.k]||[])[i]=bv??null; const erOK=b.er&&(!b.erDiv||b.erDiv===div); (out.er[b.k]=out.er[b.k]||[])[i]=hasER&&erOK?(cnt[b.k]||0):null;
       let v=null, s="none";
-      if(b.er&&hasER){ v=cnt[b.k]||0; s="er"; } else if(b.manual&&mv!=null){ v=mv; s="manual"; } else if(b.manual&&ac.any&&Object.values(ACT_BOARD).includes(b.k)){ v=ac.k[b.k]||0; s="act"; } else if(b.manual&&tl.any){ v=tl.k[b.k]||0; s="team"; } else if(bv!=null){ v=bv; s="board"; }
+      if(erOK&&hasER){ v=cnt[b.k]||0; s="er"; } else if(b.manual&&mv!=null){ v=mv; s="manual"; } else if(b.manual&&ac.any&&ACT_LINES.includes(b.k)){ v=ac.k[b.k]||0; s="act"; } else if(b.manual&&tl.any){ v=tl.k[b.k]||0; s="team"; } else if(bv!=null){ v=bv; s="board"; }
       (out.v[b.k]=out.v[b.k]||[])[i]=v; (out.src[b.k]=out.src[b.k]||[])[i]=s; }); }
   const calc=k=>{ const b=BROW[k]; if(!b.sum) return out.v[k]; if(out.v[k]) return out.v[k]; const arr=[]; for(let i=0;i<12;i++){ let s=null; b.sum.forEach(c=>{ const x=calc(c)[i]; if(x!=null) s=(s||0)+x; }); arr[i]=s; } out.v[k]=arr; return arr; };
   BOARD.forEach(b=>calc(b.k)); return out; }
@@ -282,7 +286,7 @@ function vStats(M){
     ${LR.map(r=>{ const f=M.byId[r.fac]; return `<tr ${f?`class="click" data-fac="${esc(f.id)}"`:""}><td class="mono">${fmtDate(r.date)}<div class="faint">${esc(r.tin)}–${esc(r.tout)}</div></td><td>${esc(r.inspName||"")}</td><td class="faint">${esc(r.type)}</td><td>${esc(r.occ)}<div class="faint" style="font-size:12px">${esc(r.addr)} · <span class="mono">${esc(r.id)}</span></div></td><td>${erPill(r.res)}${r.coi?`<div class="mono faint" style="font-size:12px">COI ${esc(r.coi)}</div>`:""}${reportBadge(r)}</td><td class="r mono">${r.mins}m</td><td>${f?`${esc(f.name)}${r.rot?' <span class="tag">rotation</span>':""}`:""}</td></tr>`; }).join("")}</tbody></table></div></details></section>`:"";
   return `<div class="sechead sthead"><select id="st-month" aria-label="Month">${months.map(m=>`<option value="${m}" ${m===month?"selected":""}>${MON3[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join("")}</select><div class="chips">${divChips}</div><span class="sp"></span>
     <button class="btn sm" data-act="st-copy" type="button">Copy debrief</button>${S.canWrite?`<button class="btn primary" data-act="er-import" type="button">Import Emergency Reporting</button>`:""}</div>
-    ${div==="education"?attentionPanel(month):""}${tiles}<div class="stcols">${outcomes}${reconcile}</div>${inspT}${div==="education"?hoursPanel(month)+actionsPanel(month):""}${trend}${boardT}${div==="education"?uploadsPanel(year):""}${log}`;
+    ${div==="education"||div==="county"?attentionPanel(month,div):""}${tiles}<div class="stcols">${outcomes}${reconcile}</div>${inspT}${div==="education"||div==="county"?hoursPanel(month,div)+actionsPanel(month,div):""}${trend}${boardT}${div==="education"||div==="county"?uploadsPanel(year,div):""}${log}`;
 }
 function debriefText(){ const st=S.ui.st, month=st.month, year=+month.slice(0,4), i=+month.slice(5)-1, G=yearGrid(st.div,year), O=erOutcomes(month,st.div), v=k=>G.v[k][i]??0;
   const L=[`HCFMO Prevention Bureau · ${DIVISIONS.find(d=>d[0]===st.div)[1]} Division · Monthly statistics · ${MON3[i]} ${year}`,"",
@@ -336,28 +340,30 @@ function personHours(id,month){
   const er=Object.values(S.er).filter(d=>d.month===month&&d.inspector===id).flatMap(d=>d.rows);
   const erMin=er.reduce((s,r)=>s+(r.mins||0)+(r.add||0),0);
   const AH=actHours(id,month); const acts=logEntries(id,month); const actH=AH.any?AH.h:acts.reduce((s,e)=>s+(+e.h||0),0);
-  const D=statDoc("education",+month.slice(0,4)); const set=D.days&&D.days[id]&&D.days[id][month.slice(5)];
-  const days=set!=null?set:weekdaysIn(month);
+  const D=statDoc(S.team[id]?divOf(S.team[id]):"education",+month.slice(0,4)), mm=month.slice(5); const set=D.days&&D.days[id]&&D.days[id][mm];
+  const all=D.daysAll&&D.daysAll[mm]; const days=set!=null?set:all!=null?all:DAYS_DEFAULT;
   const total=erMin/60+actH; return {er:er.length,erH:erMin/60,actH,actSrc:AH.any?"codes":acts.some(e=>e.h)?"log":null,actNoH:AH.noH,total,days,daysSet:set!=null,perDay:days?total/days:0}; }
-function hoursPanel(month){
-  const i=+month.slice(5)-1, year=+month.slice(0,4); const people=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)==="education").sort((a,b)=>a[1].name.localeCompare(b[1].name));
+const DAYS_DEFAULT=20;
+function hoursPanel(month,div){ div=div||"education";
+  const i=+month.slice(5)-1, year=+month.slice(0,4); const people=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)===div).sort((a,b)=>a[1].name.localeCompare(b[1].name));
   if(!people.length) return "";
   const canSet=S.canWrite&&myTeamMember()&&["captain","lieutenant","sergeant"].includes(myTeamMember().role);
   const rows=people.map(([id])=>{ const h=personHours(id,month); const c=h.perDay>=HOURS_TARGET?"var(--ok)":h.perDay>=HOURS_TARGET*.8?"var(--due)":"var(--bad)";
     return `<tr><td style="white-space:nowrap" data-person="${esc(id)}">${avatar(id,24)} ${esc(memberName(id))}</td><td class="r mono">${h.erH.toFixed(1)}</td><td class="r mono" title="${h.actSrc==="codes"?`From the action-code report${h.actNoH?`; ${h.actNoH} entries gave no hours`:""}`:h.actSrc==="log"?"From activity log entries":""}">${h.actH?h.actH.toFixed(1):"–"}${h.actSrc==="log"?"<sup>log</sup>":""}</td><td class="r mono"><b>${h.total.toFixed(1)}</b></td>
       <td class="r">${canSet?`<input type="number" class="daysin ${h.daysSet?"set":""}" min="0" max="31" step="0.5" value="${h.days}" data-days="${esc(id)}" aria-label="Days worked, ${esc(memberName(id))}">`:`<span class="mono">${h.days}</span>`}</td>
       <td><div class="hrsbar"><div class="meter thin" style="width:110px"><i style="width:${Math.min(100,h.perDay/8*100)}%;background:${c}"></i><span class="tick" style="left:calc(${HOURS_TARGET/8*100}% - 1px)"></span></div><span class="mono" style="color:${c}">${h.perDay.toFixed(1)}</span></div></td></tr>`; }).join("");
-  return `<section class="panel" id="hourspanel"><div class="ph"><h3>Hours worked</h3><span class="faint">${MON3[i]} ${year} · target ${HOURS_TARGET} hours per day on average</span></div>
+  const D=statDoc(div,year), allSet=D.daysAll&&D.daysAll[month.slice(5)];
+  return `<section class="panel" id="hourspanel"><div class="ph"><h3>Hours worked</h3><span class="faint">${MON3[i]} ${year} · target ${HOURS_TARGET} hours per day on average</span><span class="sp"></span>${canSet?`<label class="faint" style="font-size:12.5px;display:flex;gap:6px;align-items:center">Days worked, whole team <input type="number" class="daysin ${allSet!=null?"set":""}" min="0" max="31" step="0.5" value="${allSet??DAYS_DEFAULT}" data-daysall="${esc(div)}" aria-label="Days worked for the whole team"></label>`:""}</div>
     <div class="tablewrap"><table class="t"><thead><tr><th>Member</th><th class="r">Inspection hours</th><th class="r">Action-code hours</th><th class="r">Total</th><th class="r">Days worked</th><th>Hours per day</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="method" style="padding:0 16px 14px">Inspection hours are time on site plus additional time from the Emergency Reporting exports. Action-code hours are read from the hours written in each action-code entry ("- 2 hours", "30 min", "8:00 AM to 10:00 AM"); entries with no hours add nothing, which is why the action-code panel lists them. When no action-code report is loaded for a month, hours from activity log entries are used instead (marked log). Days worked start at the weekdays in the month${canSet?"; type over a number to account for leave, holidays or training (bold means a manager set it)":" and are adjusted by a sergeant or above"}.</p></section>`; }
-async function saveDays(id,val){ const st=S.ui.st, year=+st.month.slice(0,4), mm=st.month.slice(5), docId=`education-${year}`; const v=val===""?null:Math.max(0,+val);
-  const patch={days:{[id]:{[mm]:v}},updatedAt:new Date().toISOString(),updatedBy:S.me.id||null}; const ref=S.db.doc("stats/"+docId);
-  await write(async()=>{ if(S.stats[docId]) await ref.update(patch); else { try{ await ref.update(patch); }catch(e){ if(e&&e.code==="invalid_argument") await ref.set(Object.assign({division:"education",year},patch)); else throw e; } } },`Days worked saved for ${memberName(id)}`); }
-document.addEventListener("change", e=>{ const t=e.target; if(t.dataset&&t.dataset.days){ saveDays(t.dataset.days,t.value.trim()); } });
+    <p class="method" style="padding:0 16px 14px">Inspection hours are time on site plus additional time from the Emergency Reporting exports. Action-code hours are read from the hours written in each action-code entry ("- 2 hours", "30 min", "8:00 AM to 10:00 AM"); entries with no hours add nothing, which is why the action-code panel lists them. When no action-code report is loaded for a month, hours from activity log entries are used instead (marked log). Days worked start at ${DAYS_DEFAULT} for everyone${canSet?". Change the whole-team number at the top, or type over one person's number for leave, holidays or training. Bold means it was set by hand, and a person's own number wins over the team number. Hours per day recalculates right away":" and are adjusted by a sergeant or above"}.</p></section>`; }
+async function saveDays(id,val,divAll){ const st=S.ui.st, year=+st.month.slice(0,4), mm=st.month.slice(5); const div=divAll||(S.team[id]?divOf(S.team[id]):"education"), docId=`${div}-${year}`; const v=val===""?null:Math.max(0,+val);
+  const patch=Object.assign(divAll?{daysAll:{[mm]:v}}:{days:{[id]:{[mm]:v}}},{updatedAt:new Date().toISOString(),updatedBy:S.me.id||null}); const ref=S.db.doc("stats/"+docId);
+  await write(async()=>{ if(S.stats[docId]) await ref.update(patch); else { try{ await ref.update(patch); }catch(e){ if(e&&e.code==="invalid_argument") await ref.set(Object.assign({division:div,year},patch)); else throw e; } } },divAll?`Days worked set to ${v??DAYS_DEFAULT} for the team`:`Days worked saved for ${memberName(id)}`); }
+document.addEventListener("change", e=>{ const t=e.target; if(t.dataset&&t.dataset.days){ saveDays(t.dataset.days,t.value.trim()); } else if(t.dataset&&t.dataset.daysall){ saveDays(null,t.value.trim(),t.dataset.daysall); } });
 
 /* ---- what has been uploaded, so nobody loads the same month twice */
-function uploadsPanel(year){
-  const people=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)==="education").sort((a,b)=>a[1].name.localeCompare(b[1].name));
+function uploadsPanel(year,div){ div=div||"education";
+  const people=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)===div).sort((a,b)=>a[1].name.localeCompare(b[1].name));
   const t=todayISO(), last=+t.slice(0,4)===year?+t.slice(5,7):12; const months=[]; for(let m=1;m<=last;m++) months.push(`${year}-${String(m).padStart(2,"0")}`);
   const cell=(id,mo)=>{ const d=S.er[`${mo}__${id}`], a=S.actions[`${mo}__${id}`]; if(!d&&!a) return `<td class="up none">–</td>`;
     return `<td class="up ok">${d?`<span title="Inspections: ${esc(d.file||"")} · loaded ${esc((d.importedAt||"").slice(0,10))}${d.importedByName?" by "+esc(d.importedByName):""}">✓ <span class="mono">${d.rows.length}</span></span>`:`<span class="none">–</span>`}${a?`<span class="upact" title="Action codes: ${esc(a.source||"")}">codes <span class="mono">${(a.rows||[]).length}</span></span>`:""}</td>`; };

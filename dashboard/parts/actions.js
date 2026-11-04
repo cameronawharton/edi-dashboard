@@ -2,7 +2,16 @@
 S.actions=S.actions||{};
 /* which board line each action code fills. Codes not listed here are shown but never summed into the board. */
 const ACT_BOARD={INSP:"assist",VISIT:"site",KNOX:"knox",FMO:"fmoi",FMOC:"fmoc",VIOL:"viol",FPSN:"fpnr"};
-const actLine=a=>{ const c=String(a.c||"").toUpperCase(); if(c==="FMO"&&/clear/i.test(a.cn||"")) return "fmoc"; return ACT_BOARD[c]||null; };
+/* FSS codes (County, FSS Activities): Site Visit, Call Out For Service (On call), Trirga Work Task (Tririga received), Tririga Status counts as cleared only when it says so; every other FSS code is Other request */
+const TRIRIGA_CLEARED=/\b(clear(ed)?|closed?|complete[d]?|resolved)\b/i;
+const isFSS=a=>/^\s*FSS\b/i.test(a.cn||"")||/^\s*FSS/i.test(a.c||"");
+function fssLine(a){ const n=String(a.cn||a.c||"").toLowerCase();
+  if(/site\s*visit/.test(n)) return "fss3"; if(/call\s*out/.test(n)) return "fss5"; if(/work\s*task/.test(n)) return "fss1";
+  if(/status/.test(n)) return TRIRIGA_CLEARED.test(a.desc||"")?"fss2":"fss6"; return "fss6"; }
+/* codes arrive as "FMO", "FMO-Clr", "FPSN", "FPSN-Clear" ... only the plain FPSN (received) is on the board */
+const actLine=a=>{ if(isFSS(a)) return fssLine(a); const c=String(a.c||"").toUpperCase().replace(/\s+/g,""); if(/^FMO/.test(c)) return (/CL/.test(c)||/clear/i.test(a.cn||""))?"fmoc":"fmoi"; return ACT_BOARD[c]||null; };
+const ACT_LINES=[...Object.values(ACT_BOARD),"fss1","fss2","fss3","fss5","fss6"];
+const memDiv=id=>S.team[id]?divOf(S.team[id]):"education";
 const ASSIST_TOL=30; // minutes either way before an assist is flagged against the inspection it supports
 function actDocsFor(month,div){ return Object.entries(S.actions).filter(([,d])=>d.month===month&&(d.division||"education")===div).map(([id,d])=>Object.assign({id},d)); }
 function actRows(month,div,member){ return actDocsFor(month,div).filter(d=>!member||d.member===member).flatMap(d=>(d.rows||[]).map(r=>Object.assign({member:d.member},r))); }
@@ -10,7 +19,7 @@ function actRows(month,div,member){ return actDocsFor(month,div).filter(d=>!memb
 function actionSums(month,div){ const docs=actDocsFor(month,div||"education"); const k={}, other={};
   docs.forEach(d=>(d.rows||[]).forEach(r=>{ const line=actLine(r); if(line) k[line]=(k[line]||0)+1; else { const o=other[r.c]=other[r.c]||{cn:r.cn,n:0,h:0}; o.n++; o.h+=+r.h||0; } }));
   return {any:docs.length>0,k,other,people:new Set(docs.map(d=>d.member)).size}; }
-function actHours(member,month){ const rows=actRows(month,"education",member); return {any:actDocsFor(month,"education").some(d=>d.member===member),h:rows.reduce((s,r)=>s+(+r.h||0),0),n:rows.length,noH:rows.filter(r=>r.h==null).length}; }
+function actHours(member,month){ const dv=memDiv(member); const rows=actRows(month,dv,member); return {any:actDocsFor(month,dv).some(d=>d.member===member),h:rows.reduce((s,r)=>s+(+r.h||0),0),n:rows.length,noH:rows.filter(r=>r.h==null).length}; }
 
 /* inspection assist check: an assist entry names who was helped; find that person's inspection the same day at the same occupancy and compare time */
 function assistTarget(desc){ const m=String(desc||"").match(/(?:assist(?:ed)?(?:\s+\w+)?\s+with|assisted)\s+(?:([A-Z])\.\s*|([A-Z])\s+(?=[A-Z][a-z]))?([A-Z][A-Za-z]+)/i); if(!m) return null;
@@ -19,10 +28,10 @@ function assistTarget(desc){ const m=String(desc||"").match(/(?:assist(?:ed)?(?:
     return w===last||w===first||w===p[0]||(w.length>=4&&(p[0].startsWith(w)||w.startsWith(p[0]))); });
   return {label:(ini?ini+". ":"")+m[3],id:hit?hit[0]:null}; }
 const occKey=s=>String(s||"").replace(/\s+/g,"").toUpperCase();
-function assistCheck(month){ const out=[];
-  actRows(month,"education").filter(r=>String(r.c).toUpperCase()==="INSP").forEach(a=>{ const t=assistTarget(a.desc); const o={a,who:t?t.label:"?",target:t&&t.id};
+function assistCheck(month,div){ div=div||"education"; const out=[];
+  actRows(month,div).filter(r=>String(r.c).toUpperCase()==="INSP").forEach(a=>{ const t=assistTarget(a.desc); const o={a,who:t?t.label:"?",target:t&&t.id};
     if(!t){ o.check="noname"; out.push(o); return; }
-    if(!t.id||!isField(S.team[t.id])||divOf(S.team[t.id])!=="education"){ o.check="outside"; out.push(o); return; }
+    if(!t.id||!isField(S.team[t.id])||divOf(S.team[t.id])!==div){ o.check="outside"; out.push(o); return; }
     const theirs=Object.values(S.er).filter(d=>d.inspector===t.id).flatMap(d=>d.rows);
     const same=theirs.filter(r=>r.date===a.date), at=same.filter(r=>occKey(r.id)===occKey(a.id));
     if(at.length){ const r=at[0]; o.r=r; if(a.h==null) o.check="nohours"; else { o.diff=Math.round(a.h*60-(r.mins||0)); o.check=Math.abs(o.diff)<=ASSIST_TOL?"ok":o.diff>0?"longer":"shorter"; } }
@@ -32,13 +41,13 @@ function assistCheck(month){ const out=[];
   return out.sort((x,y)=>x.a.date.localeCompare(y.a.date)); }
 const ASSIST_LABEL={ok:["Matches","s-done"],nohours:["Matched, no hours given","s-off"],longer:["Longer than the inspection","s-due"],shorter:["Shorter than the inspection","s-due"],place:["Different location that day","s-failed"],noday:["No inspection that day","s-failed"],outside:["Assisted someone outside the team","s-off"],noname:["No name in the entry","s-off"]};
 
-function actionsPanel(month){ const docs=actDocsFor(month,"education"); const i=+month.slice(5)-1, year=+month.slice(0,4);
+function actionsPanel(month,div){ div=div||"education"; const docs=actDocsFor(month,div); const i=+month.slice(5)-1, year=+month.slice(0,4);
   if(!docs.length) return `<section class="panel"><div class="ph"><h3>Action codes</h3><span class="faint">${MON3[i]} ${year}</span></div><div class="pb empty">No action-code report loaded for this month. Prevention action lines on the board fall back to the team's own log entries or the board as entered.</div></section>`;
   const codes={}; docs.forEach(d=>(d.rows||[]).forEach(r=>{ const c=codes[r.c]=codes[r.c]||{cn:r.cn,line:actLine(r),by:{},n:0,h:0}; c.n++; c.h+=+r.h||0; c.by[d.member]=(c.by[d.member]||0)+1; }));
   const people=docs.map(d=>d.member).sort((a,b)=>memberName(a).localeCompare(memberName(b)));
   const order=Object.entries(codes).sort((a,b)=>(!!b[1].line-!!a[1].line)||b[1].n-a[1].n);
   const rowsHTML=order.map(([c,o])=>`<tr><td><span class="mono">${esc(c)}</span> ${esc(o.cn||"")}<div class="faint" style="font-size:12px">${o.line?`Board: ${esc(BROW[o.line].label)}`:"Not on the board"}</div></td>${people.map(p=>`<td class="r mono">${o.by[p]||""}</td>`).join("")}<td class="r mono"><b>${o.n}</b></td><td class="r mono">${o.h?o.h.toFixed(1):"–"}</td></tr>`).join("");
-  const A=assistCheck(month); const cnt={}; A.forEach(o=>cnt[o.check]=(cnt[o.check]||0)+1); const flagged=A.filter(o=>["longer","shorter","place","noday"].includes(o.check));
+  const A=assistCheck(month,div); const cnt={}; A.forEach(o=>cnt[o.check]=(cnt[o.check]||0)+1); const flagged=A.filter(o=>["longer","shorter","place","noday"].includes(o.check));
   const arow=o=>{ const [lbl,cls]=ASSIST_LABEL[o.check]; const r=o.r;
     const theirs=r?`${esc(memberName(o.target))}: ${esc(r.type)}, ${esc(r.tin)}–${esc(r.tout)}, ${r.mins} min on site`:o.theirs?`${esc(memberName(o.target))} was at ${o.theirs.map(x=>esc(x.occ)).join(", ")}`:o.near&&o.near.length?`${esc(memberName(o.target))} inspected it ${o.near.map(x=>fmtDate(x.date)).join(", ")}`:o.target&&S.team[o.target]?`Nothing on file for ${esc(memberName(o.target))} that day`:"";
     return `<tr><td class="mono">${fmtDate(o.a.date)}</td><td style="white-space:nowrap">${avatar(o.a.member,22)} ${esc(memberName(o.a.member))}</td><td>${esc(o.who)}</td><td>${esc(o.a.occ)}<div class="faint mono" style="font-size:12px">${esc(o.a.id)}</div></td><td class="r mono" style="white-space:nowrap">${o.a.h!=null?o.a.h.toFixed(2).replace(/\.?0+$/,"")+" h":"–"}</td><td><span class="pill ${cls}">${lbl}</span>${o.diff!=null&&o.check!=="ok"?` <span class="mono faint">${o.diff>0?"+":""}${o.diff} min</span>`:""}<div class="faint" style="font-size:12px">${theirs}</div>${flagCell(o)}</td></tr>`; };

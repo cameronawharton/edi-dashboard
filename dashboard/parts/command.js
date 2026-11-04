@@ -30,12 +30,12 @@ document.addEventListener("click",async e=>{ const t=e.target;
 });
 
 /* ---- weekly supervisor check */
-function attentionPanel(month){ const M=model(); const i=+month.slice(5)-1, year=+month.slice(0,4);
-  const field=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)==="education").map(([id])=>id);
-  const haveER=erDocsFor(month,"education").length>0;
+function attentionPanel(month,div){ div=div||"education"; const M=model(); const i=+month.slice(5)-1, year=+month.slice(0,4);
+  const field=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)===div).map(([id])=>id);
+  const haveER=erDocsFor(month,div).length>0;
   const low=haveER?field.map(id=>[id,personHours(id,month)]).filter(([,h])=>h.perDay<HOURS_TARGET).sort((a,b)=>a[1].perDay-b[1].perDay):[];
-  const A=assistCheck(month).filter(o=>FLAGGED.includes(o.check)); const open=A.filter(o=>["open","sentback"].includes(flagState(o))), review=A.filter(o=>flagState(o)==="explained");
-  const behind=Object.values(M.orgStats).filter(s=>s.behind).sort((a,b)=>(b.expected-b.coverage)*b.active-(a.expected-a.coverage)*a.active);
+  const A=assistCheck(month,div).filter(o=>FLAGGED.includes(o.check)); const open=A.filter(o=>["open","sentback"].includes(flagState(o))), review=A.filter(o=>flagState(o)==="explained");
+  const behind=div!=="education"?[]:Object.values(M.orgStats).filter(s=>s.behind).sort((a,b)=>(b.expected-b.coverage)*b.active-(a.expected-a.coverage)*a.active);
   const box=(n,title,body,jump,warn)=>`<div class="att ${n?warn||"warn":"ok"}"><div class="atth"><b class="num">${n}</b><span>${title}</span>${jump&&n?`<button class="btn sm ghost" type="button" data-jump="${jump}">Review</button>`:""}</div>${n?`<div class="attb">${body}</div>`:`<div class="attb faint">Nothing here.</div>`}</div>`;
   const lowB=low.map(([id,h])=>`<span class="attrow">${avatar(id,20)} ${esc(memberName(id))} <span class="mono">${h.perDay.toFixed(1)} h/day</span></span>`).join("");
   const flagB=`${open.length?`<span class="attrow">${open.length} with no explanation or sent back</span>`:""}${review.length?`<span class="attrow">${review.length} explained, waiting for your review</span>`:""}${[...new Set(open.map(o=>o.a.member))].map(id=>`<span class="attrow">${avatar(id,20)} ${esc(memberName(id))} <span class="mono">${open.filter(o=>o.a.member===id).length}</span></span>`).join("")}`;
@@ -43,7 +43,7 @@ function attentionPanel(month){ const M=model(); const i=+month.slice(5)-1, year
   return `<section class="panel"><div class="ph"><h3>Needs attention</h3><span class="faint">${MON3[i]} ${year} · weekly supervisor check</span></div><div class="pb attgrid">
     ${box(haveER?low.length:0,`under ${HOURS_TARGET} hours per day`,haveER?lowB:"",haveER?"hourspanel":null)}
     ${box(open.length+review.length,"assists that don't line up",flagB,"actionspanel")}
-    ${box(behind.length,`districts behind rotation pace (${M.Y})`,behB,null)}
+    ${div==="education"?box(behind.length,`districts behind rotation pace (${M.Y})`,behB,null):""}
   </div>${haveER?"":`<p class="method" style="padding:0 16px 14px">Hours need this month's Emergency Reporting exports.</p>`}</section>`; }
 
 /* ---- command summary (assistant chiefs and up): division numbers, positive highlights by rule */
