@@ -71,8 +71,8 @@ function vInsights(){
       <div class="ans"><b>${pct(N?C/N:0)}</b><span class="big2">${C} of ${N} campuses</span></div>${sentenceBox("s-q5",sent)}
       <div class="qlist">${os.map(o=>`<div class="qrow" data-org="${o.x.id}"><span class="nm">${esc(o.x.org.name)}</span><div class="meter thin"><i style="width:${o.n?o.c/o.n*100:0}%;background:var(--accent)"></i></div><span class="mono">${o.c}/${o.n}</span><span class="mono">${pct(o.n?o.c/o.n:0)}</span></div>`).join("")}</div>
       <p class="method">Rotations A, B and C each cover about a third of a district, so a full cycle should reach 100%. Years in the window: ${win.slice().reverse().join(", ")}.</p></section>`); }
-  /* Q6: rotation adherence */
-  { const Y=I.q6year||cur; const M=model(Y), L=rotationFor(Y); const isd=M.facs.filter(f=>f.type==="ISD"&&f.visited); const inR=isd.filter(f=>f.inRotation).length;
+  /* Q6: rotation adherence (retired Nov 4 2026: no rotation, every school every season) */
+  if(false){ const Y=I.q6year||cur; const M=model(Y), L=rotationFor(Y); const isd=M.facs.filter(f=>f.type==="ISD"&&f.visited); const inR=isd.filter(f=>f.inRotation).length;
     const rot=M.facs.filter(f=>f.type==="ISD"&&f.inRotation); const rotDone=rot.filter(f=>f.visited).length;
     const sent=`In ${Y}, ${inR} of ${isd.length} ISD campuses inspected (${pct(isd.length?inR/isd.length:0)}) were in that year's Rotation ${L} or on the every-year list, and ${rotDone} of ${rot.length} rotation campuses (${pct(rot.length?rotDone/rot.length:0)}) have been done.`;
     cards.push(`<section class="qcard"><div class="q">Is the work following the rotation in ${yearSel("q6year",Y,years)}?</div>

@@ -73,7 +73,7 @@ function mapSide(M,sel){
   const order=["failed","due","unassigned","done","off"]; const GL={failed:"Failed · re-inspect",due:"Due this year",unassigned:"No rotation letter",done:"Inspected this year",off:"Off-cycle"};
   const groups=order.map(k=>{ const list=shown.filter(f=>f.state===k).sort((a,b)=>a.name.localeCompare(b.name)); if(!list.length) return "";
     return `<div class="fgroup"><div class="gh"><i class="dot" style="background:${STATE_FILL[k]}"></i>${GL[k]} <span class="faint">${list.length}</span></div>
-      ${list.map(f=>`<div class="frow ${mp.hot===f.id?"hot":""}" data-mapfac="${esc(f.id)}">${rotBadge(f.rotation,M.L)}<span class="grow">${esc(f.name)}</span><span class="when">${f.lastY?fmtDate(f.lastY.date):(f.lastAny?fmtDate(f.lastAny.date):"")}</span><button class="copy" data-act="open-fac" data-fac="${esc(f.id)}" type="button" aria-label="Open ${esc(f.name)}">Open</button></div>`).join("")}</div>`; }).join("");
+      ${list.map(f=>`<div class="frow ${mp.hot===f.id?"hot":""}" data-mapfac="${esc(f.id)}"><span class="grow">${esc(f.name)}</span><span class="when">${f.lastY?fmtDate(f.lastY.date):(f.lastAny?fmtDate(f.lastAny.date):"")}</span><button class="copy" data-act="open-fac" data-fac="${esc(f.id)}" type="button" aria-label="Open ${esc(f.name)}">Open</button></div>`).join("")}</div>`; }).join("");
   const issues=orgIssues(M,s);
   const projects=Object.entries(S.projects).filter(([,p])=>p.org===sel && p.phase!=="Complete");
   const contacts=(o.contacts||[]);
@@ -81,14 +81,14 @@ function mapSide(M,sel){
   return `<div class="bhead"><div class="top"><button class="btn sm ghost" data-act="map-reset" type="button">← County</button><span class="sp" style="flex:1"></span><a class="btn sm" href="#org-${sel}">District page</a>${S.canWrite?`<button class="btn sm primary" data-act="log" type="button">Log inspection</button>`:""}</div>
     <div><span class="eyebrow">${M.Y} · Rotation ${M.L} · ${esc(teamName(o.assignedTo))}</span><h2>${esc(o.name)}</h2></div>
     <div class="hero">${ringSVG(108,s.coverage,s.target,covColor(s.coverage,s.target,s.expected),"inspected")}<div class="facts">
-      <div><b>${s.visited}<span class="faint" style="font-size:15px">/${s.active}</span></b><span>campuses</span></div><div><b>${s.rotDone}<span class="faint" style="font-size:15px">/${s.rotTotal}</span></b><span>rotation ${M.L}</span></div>
+      <div><b>${s.visited}<span class="faint" style="font-size:15px">/${s.active}</span></b><span>campuses</span></div>
       <div><b>${s.need}</b><span>to ${pct(s.target)}</span></div><div><b style="color:${s.failed?"var(--bad)":"inherit"}">${s.failed}</b><span>failed</span></div></div></div></div>
   <div class="scroll">
     <div class="bsec"><h3>Key issues <span class="mono">${issues.length}</span></h3>${issues.length?issues.map(([c,t,d])=>`<div class="issue"><span class="bar" style="background:${c}"></span><div><b>${t}</b><div class="muted" style="font-size:12.5px">${d}</div></div></div>`).join(""):`<span class="muted">No open issues. This district is on track.</span>`}</div>
     <div class="bsec"><h3>Inspection status</h3>
       <div class="stack" role="img" aria-label="Campus status breakdown">${order.map(k=>counts[k]?`<i style="width:${counts[k]/tot*100}%;background:${STATE_FILL[k]}" title="${GL[k]}: ${counts[k]}"></i>`:"").join("")}</div>
       <div class="stackkey">${order.filter(k=>counts[k]).map(k=>`<span><i class="dot" style="background:${STATE_FILL[k]}"></i>${counts[k]} ${GL[k].split(" ·")[0].toLowerCase()}</span>`).join("")}${exclusions.length?`<span class="faint">${exclusions.length} closed or excluded</span>`:""}</div>
-      <div class="chips">${[["rotation",`Rotation ${M.L}`],["attention","Needs attention"],["done","Inspected"],["all","All"]].map(([k,l])=>`<button class="chip" data-mapfilter="${k}" aria-pressed="${fl===k}" type="button">${l}</button>`).join("")}</div>
+      <div class="chips">${[["rotation","This season"],["attention","Needs attention"],["done","Inspected"],["all","All"]].map(([k,l])=>`<button class="chip" data-mapfilter="${k}" aria-pressed="${fl===k}" type="button">${l}</button>`).join("")}</div>
       ${groups||`<span class="muted">Nothing in this filter.</span>`}</div>
     <div class="bsec"><h3>Key contacts</h3>${contacts.length?contacts.map(c=>`<div class="ccard"><span class="role">${esc(c.role||"Contact")}</span><span class="nm">${esc(c.name||"")}</span><span></span>
       ${c.phone?`<span class="ln"><span class="mono">${esc(c.phone)}</span><button class="copy" data-act="copy" data-text="${esc(c.phone)}" type="button">Copy</button></span>`:""}

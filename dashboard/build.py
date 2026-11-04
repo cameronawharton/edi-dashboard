@@ -56,6 +56,22 @@ rep('''...new Set(vs.map(v=>v.inspector||"_none").filter(x=>!S.team[x]))]''','''
 rep('''${c.phone?`<div class="mono">${esc(c.phone)}</div>`:""}${c.email?`<div class="email mono">${esc(c.email)}</div>`:""}''','''${c.phone?`<a class="mono clink" href="${telHref(c.phone)}">${esc(c.phone)}</a>`:""}${c.email?`<a class="email mono clink" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}''')
 rep('''<span class="ln"><span class="mono">${esc(c.phone)}</span>''','''<span class="ln"><a class="mono clink" href="${telHref(c.phone)}">${esc(c.phone)}</a>''')
 rep('''<span class="ln"><span class="mono">${esc(c.email)}</span>''','''<span class="ln"><a class="mono clink" href="mailto:${esc(c.email)}">${esc(c.email)}</a>''')
+ROTSTAT='    ${isISD?`<div class="stat"><span class="eyebrow">Rotation ${M.L}</span><b class="num">${s.rotDone}<span class="faint" style="font-size:18px">/${s.rotTotal}</span></b><span class="faint" style="font-size:12px">A ${rotCounts.A} · B ${rotCounts.B} · C ${rotCounts.C}</span></div>`:""}\n'
+# No rotation (Nov 4 2026): every school, private, charter and daycare is due every season, target 100%.
+rep('function settings(){ return Object.assign({yearStartMonth:8,workEndMonth:5,rotationAnchor:{year:"2025-26",letter:"A"},targets:{ISD:.30,Charter:1,Private:1,Daycare:1}}, S.settings||{}); }',
+    'function settings(){ return Object.assign({yearStartMonth:8,workEndMonth:5,rotationAnchor:{year:"2025-26",letter:"A"}}, S.settings||{}, {targets:{ISD:1,Charter:1,Private:1,Daycare:1}}); }')
+rep('function target(org){ return org.target ?? settings().targets[org.type] ?? 1; }','function target(org){ return 1; }')
+rep('const required = f.type!=="ISD" ? true : (f.rotation===L || f.rotation==="ABC" || (f.flags||[]).includes("walk-every-year"));','const required = true;')
+rep('    else if(f.type==="ISD" && !f.rotation) f.state="unassigned";\n','')
+rep('<span class="rot-chip" id="rotchip" title="Rotation group inspected this year">B</span>','<span class="rot-chip" id="rotchip" hidden></span>')
+rep('$("#rotchip").textContent="Rotation "+rotationFor(curYear());','')
+rep("<span class=\"muted\">Rotation <b>${M.L}</b> is this year's 30% group. Pace line","<span class=\"muted\">Every school, private, charter and daycare is due every season. Pace line")
+rep('<th class="r hide-sm">Rot. ${M.L}</th><th class="r">To ${pct(settings().targets.ISD)}</th>','<th class="r">Still needed</th>')
+rep('<td class="r num mono hide-sm">${s.rotDone}/${s.rotTotal}</td><td class="r num mono">${s.need?','<td class="r num mono">${s.need?')
+rep(ROTSTAT,'')
+rep('${isISD?`<span style="flex:1"></span><div class="chips">${[["all","All"],["A","Rotation A"]','${false?`<span style="flex:1"></span><div class="chips">${[["all","All"],["A","Rotation A"]')
+rep('<th>Facility</th>${isISD?"<th>Rot.</th>":""}','<th>Facility</th>')
+rep('    ${isISD?`<td>${rotBadge(f.rotation,M.L)}</td>`:""}<td>${f.state==="excluded"','    <td>${f.state==="excluded"')
 # app name (Nov 4 2026): Education Division Insight -> CO/ED Division Insight
 assert s.count("Education Division Insight")==4, s.count("Education Division Insight")
 s=s.replace("Education Division Insight","CO/ED Division Insight")
