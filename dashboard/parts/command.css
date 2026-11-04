@@ -1,5 +1,5 @@
 /* supervisor attention + flags */
-.attgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.attgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .att{border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .att.warn{border-left-color:var(--bad)}
 .atth{display:flex;gap:8px;align-items:baseline}.atth b{font:700 28px/1 var(--f-display)}.att.warn .atth b{color:var(--bad)}.atth span{font-weight:600;font-size:13px;flex:1}
