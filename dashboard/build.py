@@ -73,6 +73,9 @@ rep(ROTSTAT,'')
 rep('${isISD?`<span style="flex:1"></span><div class="chips">${[["all","All"],["A","Rotation A"]','${false?`<span style="flex:1"></span><div class="chips">${[["all","All"],["A","Rotation A"]')
 rep('<th>Facility</th>${isISD?"<th>Rot.</th>":""}','<th>Facility</th>')
 rep('    ${isISD?`<td>${rotBadge(f.rotation,M.L)}</td>`:""}<td>${f.state==="excluded"','    <td>${f.state==="excluded"')
+# Rotation fully removed (Nov 4 2026): exact base.html fragments and their replacements, applied in order.
+import json as _json
+for _a,_b in _json.load(open(os.path.join(HERE,'derotate.json'))): rep(_a,_b)
 # app name (Nov 4 2026): Education Division Insight -> CO/ED Division Insight
 assert s.count("Education Division Insight")==4, s.count("Education Division Insight")
 s=s.replace("Education Division Insight","CO/ED Division Insight")

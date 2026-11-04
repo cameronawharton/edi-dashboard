@@ -1,0 +1,106 @@
+[
+[
+"      <td>${f.type===\"ISD\"?rotBadge(f.rotation,M.L):'<span class=\"faint\" style=\"font-size:12px\">annual</span>'}</td>",
+""
+],
+[
+"<div class=\"fset\"><span class=\"eyebrow\">Rotation</span><div class=\"chips\">${ROT_OPTS.map(([v,l])=>chip(\"rot\",v,l,cRot[v])).join(\"\")}</div></div>",
+""
+],
+[
+"[[\"org\",\"District\"],[\"rotation\",\"Rotation\"],[\"state\",\"Status\"],[\"none\",\"No grouping\"]]",
+"[[\"org\",\"District\"],[\"state\",\"Status\"],[\"none\",\"No grouping\"]]"
+],
+[
+"\"Type\",\"Address\",\"Rotation\",\"Status \"+M.Y,\"Last inspection\"",
+"\"Type\",\"Address\",\"Status \"+M.Y,\"Last inspection\""
+],
+[
+"f.address,f.type===\"ISD\"?(f.rotation===\"ABC\"?\"Every year\":f.rotation||\"\"):\"Annual\",f.state===\"excluded\"",
+"f.address,f.state===\"excluded\""
+],
+[
+"  /* Q5: three-year cycle */\n  {",
+"  /* Q5 and Q6 retired Nov 4 2026: no rotation, every school every season */\n  if(false){"
+],
+[
+"  /* Q6: rotation adherence */\n  {",
+"  if(false){"
+],
+[
+"    <div class=\"field\"><label for=\"st-anchor\">Rotation anchor</label><div style=\"display:flex;gap:8px\"><input type=\"text\" id=\"st-anchor\" value=\"${esc(st.rotationAnchor.year)}\" style=\"width:110px\"><select id=\"st-letter\">${\"ABC\".split(\"\").map(l=>`<option ${l===st.rotationAnchor.letter?\"selected\":\"\"}>${l}</option>`).join(\"\")}</select></div><span class=\"faint\" style=\"font-size:12px\">Rotation letters cycle A \u2192 B \u2192 C from this year.</span></div>",
+""
+],
+[
+" (rotation ${M.L}) \u00b7 as of ",
+" \u00b7 as of "
+],
+[
+"<span><i class=\"dot\" style=\"background:var(--off)\"></i>Off-cycle</span>",
+""
+],
+[
+"<span class=\"eyebrow\">${M.Y} season \u00b7 Rotation ${M.L}</span><h2>Harris County ISDs</h2>",
+"<span class=\"eyebrow\">${M.Y} season \u00b7 every school due</span><h2>Harris County ISDs</h2>"
+],
+[
+"data-mapfac=\"${esc(f.id)}\">${rotBadge(f.rotation,M.L)}<span class=\"grow\">",
+"data-mapfac=\"${esc(f.id)}\"><span class=\"grow\">"
+],
+[
+"<span class=\"eyebrow\">${M.Y} \u00b7 Rotation ${M.L} \u00b7 ${esc(teamName(o.assignedTo))}</span>",
+"<span class=\"eyebrow\">${M.Y} \u00b7 ${esc(teamName(o.assignedTo))}</span>"
+],
+[
+"<div><b>${s.rotDone}<span class=\"faint\" style=\"font-size:15px\">/${s.rotTotal}</span></b><span>rotation ${M.L}</span></div>",
+""
+],
+[
+"[[\"rotation\",`Rotation ${M.L}`],[\"attention\",\"Needs attention\"]",
+"[[\"rotation\",\"This season\"],[\"attention\",\"Needs attention\"]"
+],
+[
+"<div class=\"s\">Rotation ${M.L}: ${s.rotDone}/${s.rotTotal} \u00b7 ${s.need?",
+"<div class=\"s\">${s.need?"
+],
+[
+"${o.type===\"ISD\"?`<div class=\"field\"><span class=\"lab\">Rotation</span>${segs(\"fe-rot\",[[\"A\",\"A\"],[\"B\",\"B\"],[\"C\",\"C\"],[\"ABC\",\"Every year\"],[\"\",\"None\"]],f?f.rotation||\"\":rotationFor(curYear()))}</div>`:\"\"}",
+""
+],
+[
+"  <div class=\"field full\"><label><input type=\"checkbox\" id=\"fe-every\" ${f&&(f.flags||[]).includes(\"walk-every-year\")?\"checked\":\"\"}> Must be walked every year (daycare inside, flex campus)</label></div>",
+""
+],
+[
+"  if($(\"#fe-rot\")) patch.rotation=segVal(\"fe-rot\")||null;",
+""
+],
+[
+",\"Rotation \"+M.L+\" done\",\"Rotation \"+M.L+\" total\",",
+","
+],
+[
+",s.need,s.rotDone,s.rotTotal,s.failed,",
+",s.need,s.failed,"
+],
+[
+"\"Type\",\"Address\",\"Rotation\",\"Status\",\"State \"+y,",
+"\"Type\",\"Address\",\"Status\",\"State \"+y,"
+],
+[
+"f.org.name,f.type,f.address,f.rotation,f.status||\"active\"",
+"f.org.name,f.type,f.address,f.status||\"active\""
+],
+[
+"${isISD&&s.unassigned?`<button class=\"btn sm\" data-act=\"balance\" data-org=\"${oid}\" type=\"button\">Balance rotation (${s.unassigned})</button>`:\"\"}",
+""
+],
+[
+"${showOrgCol?\"<th>District / operator</th>\":\"\"}<th>Rot.</th>",
+"${showOrgCol?\"<th>District / operator</th>\":\"\"}"
+],
+[
+"const STATE_OPTS=[[\"failed\",\"Failed \u00b7 re-inspect\"],[\"due\",\"Due this year\"],[\"done\",\"Inspected\"],[\"off\",\"Off-cycle\"],[\"unassigned\",\"No rotation\"],[\"excluded\",\"Closed / excluded\"]];",
+"const STATE_OPTS=[[\"failed\",\"Failed \u00b7 re-inspect\"],[\"due\",\"Due this year\"],[\"done\",\"Inspected\"],[\"excluded\",\"Closed / excluded\"]];"
+]
+]
