@@ -47,7 +47,8 @@ function attentionPanel(month,div){ div=div||"education"; const M=model(); const
     ${box(haveER?low.length:0,`under ${HOURS_TARGET} hours per day`,haveER?lowB:"",haveER?"hourspanel":null)}
     ${box(open.length+review.length,"assists that don't line up",flagB,"actionspanel")}
     ${box(missing.reduce((s,[,h])=>s+h.actNoH,0),"action codes with no time written (counted as 15 min)",missB,"actionspanel")}
-    ${div==="education"?box(behind.length,`districts behind rotation pace (${M.Y})`,behB,null):""}
+    ${div==="education"?box(behind.length,`districts behind pace (${M.Y})`,behB,null):""}
+    ${div==="county"?(A=>box(A.unassigned.length,"county buildings with no FSS owner",A.unassigned.slice(0,6).map(f=>`<span class="attrow">${esc(f.name)}</span>`).join("")+(A.unassigned.length>6?`<span class="faint">and ${A.unassigned.length-6} more</span>`:"")+`<a class="btn sm ghost" href="#county" style="align-self:flex-start">Open county facilities</a>`,null))(countyAttention()):""}
   </div>${haveER?"":`<p class="method" style="padding:0 16px 14px">Hours need this month's Emergency Reporting exports.</p>`}</section>`; }
 
 /* ---- command summary (assistant chiefs and up): division numbers, positive highlights by rule */

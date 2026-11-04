@@ -6,16 +6,17 @@ import os,shutil
 HERE=os.path.dirname(os.path.abspath(__file__)); DIST=os.path.join(os.path.dirname(HERE),'dist')
 s=open(os.path.join(HERE,'base.html')).read()
 P=os.path.join(HERE,'parts')+'/'
-css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()
+css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read()+open(P+'county.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()+'\n'+open(P+'county.js').read()
 def rep(a,b):
     global s
     assert s.count(a)==1,(a[:80],s.count(a)); s=s.replace(a,b)
 rep('@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}\n</style>', css+'@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}\n</style>')
 rep('\nboot();\n</script>','\n'+js+'\nboot();\n</script>')
 rep('["insights","Insights"],','["insights","Insights"],["stats","Monthly stats"],["brief","Command summary"],')
-rep('insights:vInsights,','insights:vInsights,stats:vStats,brief:vBrief,person:vPerson,')
+rep('["map","Map"],','["map","Map"],["county","County facilities"],')
+rep('insights:vInsights,','insights:vInsights,stats:vStats,brief:vBrief,county:vCounty,person:vPerson,')
 rep('el.innerHTML=fn(M);','el.innerHTML=S.ui.view==="person"?vPerson(M,S.ui.param):fn(M);')
-rep('sub("inbox","inbox");','sub("inbox","inbox"); sub("er","er"); sub("stats","stats"); sub("log","log"); sub("actions","actions"); sub("flags","flags");')
+rep('sub("inbox","inbox");','sub("inbox","inbox"); sub("er","er"); sub("stats","stats"); sub("log","log"); sub("actions","actions"); sub("flags","flags"); sub("cfac","cfac");')
 rep('const fn={overview','if((S.ui.view==="stats"||S.ui.view==="brief")&&!S.loaded.ledgers){ el.innerHTML=`<div class="skeleton">Loading…</div>`; return; }\n  const fn={overview')
 rep("""<span class="faint">No inspections on record.</span><span></span></div>`}</div>""","""<span class="faint">No inspections on record.</span><span></span></div>`}</div>${erActivityHTML(fid)}""")
 # routing

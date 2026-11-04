@@ -23,6 +23,7 @@ dashboard/parts/           modules spliced in at build time (CSS and JS, concate
   detail.js/.css           district logos, street maps around schools, tap-to-call/email (telHref)
   people.js/.css           team, profiles, header identity chip, divisions, district assignments
   actions.js               action codes: board mapping, inspection assist check, report detail modal
+  county.js/.css           County facilities page (#county): FSS owners, inspection months, county map with Downtown zoom, unassigned buildings
   command.js/.css          supervisor "Needs attention" panel, flag explain/accept/send back, Command summary page + print
 dashboard/build.py         splices parts into base.html via exact-match rep() hooks, injects assets/geo_map.json -> dist/tracker.html
 dashboard/harness.py       dist/test.html (data/seed) or dist/live.html (data/live) with a fake database for Playwright
@@ -61,6 +62,7 @@ Screenshot what you changed before publishing. Check a printed page with `page.p
 | stats | `<division>-<year>` | board as entered (board.k.MM), manual entries (manual.k.MM), days worked (days.member.MM), boardIssues |
 | team | person slug | name, preferred, role (captain, lieutenant, sergeant, inspector, specialist), division (education, county), field, unit, userId, photo |
 | log | `<member>__<YYYY-MM>` | activity log entries. RETIRED as an input (Nov 3): everything goes through ER |
+| cfac | building slug (`oce-` prefix = on the OCE map only) | county building: name, address, city, zip, section, fss (member id or null), sqft, bda, systems, brands, annualMonth, semiMonth (1-12), monthsReview, src (fss/oce), oce {program, region, pct, use, year}, lat, lng, ownerLog |
 | projects, config, inbox | | construction projects, settings, intake |
 
 Write with ArtifactData. Pin `if_version` on every existing doc. Prefer one `batch` per change. When importing, run the app's own logic (erPlan, renderERI, erSave) in the harness and write the docs it produces, instead of hand-building records.
@@ -90,5 +92,6 @@ Write with ArtifactData. Pin `if_version` on every existing doc. Prefer one `bat
 4. Action-code importer in the page (today they are loaded by script from the PDF).
 5. "Create EDU": standardize the team's action codes to one board line each, hours always written the same way.
 6. Contacts: Text option, "Log this call" onto the school record, call/email on team profiles.
-7. County facilities map: OCE "Facilities and Regions" map (Sept 2026, 145 buildings: address, OCE region 1-8, precinct, use, year, sq ft) is OCR'd to data/county/county_buildings_ocr.json (not in git; region column noisy, verify before use). FSS owns buildings by section: Downtown Bryan Darjean, West Dillon Eldridge, East Kaley Bowdoin, South Jimmie Gabriel. OCE regions do not map 1:1 to FSS sections; Cameron is getting the building-to-FSS list. Do not guess ownership from regions.
+7. County facilities (built Nov 4 2026): 190 buildings from the FSS building list (owners: East Kaley Bowdoin 55, Downtown Bryan Darjean 27, West Dillon Eldridge 50, South Jimmie Gabriel 58) merged with the OCE Facilities and Regions map (145 buildings, OCR'd; 124 matched by address or name). 21 OCE-only buildings have no owner and show in Needs attention until a sergeant assigns one. Annual/semi-annual months for East, Downtown and South are flagged monthsReview (Cameron: leave for the team to set); saving months in the building popup clears the flag. 11 addresses did not geocode (Census). Rebuild with tools/county/build_county.py; coordinates came from the Census one-line geocoder run in Chrome.
+   School assignments were rebalanced Nov 4 2026 ("Balance it"): whole ISDs kept together, privates/charters by nearest inspector. Deanna 139 (Cy-Fair, Katy, Alief), Matt 135 (Spring, Tomball, Waller, Klein + north charters), Mason 131 (Humble, Crosby, Goose Creek, Huffman, Clear Creek, Pasadena, Galena Park, Channelview, ISD Daycares + east/south privates and charters), Donald 116 (Aldine, Sheldon + central privates and charters). History is in each org's assignLog.
 8. Question waiting on Cameron: board line for 233-Special Events.
