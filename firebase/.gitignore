@@ -1,0 +1,10 @@
+node_modules/
+# Real records and people's photos never go in git. Keep them in data/ locally and load with npm run import.
+data/
+public/team/
+public/config.js
+.firebase/
+*.log
+.DS_Store
+public/index.html
+public/shim.js

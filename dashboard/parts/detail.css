@@ -1,0 +1,41 @@
+/* Logos */
+.logo{--s:40px;width:var(--s);height:var(--s);flex:none;display:inline-grid;place-items:center;background:#fff;border:1px solid var(--line);border-radius:calc(var(--s)*.22);overflow:hidden;vertical-align:middle}
+.logo img{width:100%;height:100%;object-fit:contain}
+.mh .logo{margin-right:10px}
+.mh h2{display:flex;align-items:center}
+.orgbrand{display:flex;gap:16px;align-items:center}
+.orgbrand h2{margin:0;font:700 30px/1.05 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.orgbrand .eyebrow{display:block}
+.bhead .brandrow{display:flex;gap:12px;align-items:center}
+.tooltip .tl{display:flex;gap:8px;align-items:center}
+.tooltip .logo{--s:28px}
+/* Street map around a school */
+.smap{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--land)}
+.smap svg{display:block;width:100%;height:auto;aspect-ratio:62/43}
+.smap.loading{display:grid;place-items:center;aspect-ratio:62/43;font-size:12.5px}
+.sm-land{fill:var(--land)}
+.sm-case,.sm-road{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.sm-case{stroke:var(--line)}
+.sm-road{stroke:var(--panel)}
+.sm-case.r1{stroke-width:9;stroke:color-mix(in srgb,var(--road) 70%,var(--ink))} .sm-road.r1{stroke-width:6.5;stroke:color-mix(in srgb,var(--road) 55%,var(--panel))}
+.sm-case.r2{stroke-width:7.5;stroke:color-mix(in srgb,var(--road) 60%,var(--line))} .sm-road.r2{stroke-width:5.5;stroke:color-mix(in srgb,var(--road) 30%,var(--panel))}
+.sm-case.r3{stroke-width:5.5} .sm-road.r3{stroke-width:3.5}
+.sm-case.r4{stroke-width:5} .sm-road.r4{stroke-width:3.2}
+.sm-case.r5{stroke-width:2.6;stroke-dasharray:2 3} .sm-road.r5{stroke-width:1.2}
+.sm-label{font:500 .2px var(--f-body);fill:var(--ink2);text-anchor:middle;paint-order:stroke;stroke:var(--panel);stroke-width:.06px;stroke-linejoin:round;pointer-events:none}
+.sm-label.r1,.sm-label.r2{font-weight:600;fill:var(--ink);font-size:.22px}
+.sm-pin{cursor:pointer}
+.sm-pin circle{stroke:var(--panel);stroke-width:2.5;vector-effect:non-scaling-stroke}
+.sm-pin.me circle{stroke:var(--ink);stroke-width:3}
+.sm-near{font:500 .18px var(--f-body);fill:var(--ink2);text-anchor:middle;paint-order:stroke;stroke:var(--panel);stroke-width:.05px}
+.sm-scale line{stroke:var(--ink2);stroke-width:2;vector-effect:non-scaling-stroke}
+.sm-scale text{font:500 .18px var(--f-mono);fill:var(--ink2)}
+.sm-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:7px 10px;border-top:1px solid var(--line);background:var(--panel);font-size:12px}
+.sm-foot .faint{margin-left:auto}
+/* main map: district streets */
+.g-street{fill:none;stroke:color-mix(in srgb,var(--road) 45%,var(--land));vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;stroke-width:.8}
+.g-street.r1,.g-street.r2{stroke-width:1.3;stroke:color-mix(in srgb,var(--road) 70%,var(--land))}
+.g-street.r5{stroke-width:.5;stroke-dasharray:1 2}
+a.clink{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px;display:block;overflow-wrap:anywhere}
+a.clink:hover{color:var(--accent);text-decoration-color:currentColor}
+.ccard .ln a.clink{display:inline}

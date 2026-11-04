@@ -1,0 +1,102 @@
+rules_version = '2';
+// Education Division Insight: who can read and write what.
+//
+// Identity: Firebase Auth (email link or Microsoft). A signed-in person becomes a MEMBER by claiming
+// their profile in the app, which creates members/{uid} = {team: <team doc id>}. The claim is only
+// accepted when the team doc's `email` matches the signed-in, verified email address.
+// Role comes from that team doc's `role`: captain | lieutenant | sergeant | inspector.
+//
+//   everyone (members)      read everything; log inspections; edit facilities/contacts; write their own activity log
+//   sergeant / lieutenant   + Emergency Reporting imports, monthly stats, district assignments, deletes
+//   captain                 + team profiles, roles, settings
+//
+// UNTESTED against the emulator at handoff (the emulator could not be downloaded in the build sandbox).
+// Run `npm run test:rules` before deploying. See tests/rules.test.mjs.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function workEmail() {
+      return signedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('.*@fmo[.]hctx[.]net$');
+    }
+    function memberDoc() { return get(/databases/$(database)/documents/members/$(request.auth.uid)); }
+    function isMember() { return workEmail() && exists(/databases/$(database)/documents/members/$(request.auth.uid)); }
+    function myTeam() { return memberDoc().data.team; }
+    function role() { return get(/databases/$(database)/documents/team/$(myTeam())).data.role; }
+    function isEditor() { return isMember() && role() in ['captain', 'lieutenant', 'sergeant']; }
+    function isCaptain() { return isMember() && role() == 'captain'; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ---- identity
+    match /members/{uid} {
+      allow read: if workEmail() && (request.auth.uid == uid || isMember());
+      allow create: if workEmail() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['team', 'at'])
+        && get(/databases/$(database)/documents/team/$(request.resource.data.team)).data.get('email', '').lower() == request.auth.token.email.lower()
+        && get(/databases/$(database)/documents/team/$(request.resource.data.team)).data.get('userId', null) in [null, request.auth.uid];
+      allow delete: if workEmail() && (request.auth.uid == uid || isCaptain());
+      allow update: if false;
+    }
+
+    match /team/{id} {
+      allow read: if workEmail();                       // the claim screen lists the roster before membership exists
+      allow create, delete: if isCaptain();
+      allow update: if isCaptain()
+        || (isMember() && myTeam() == id
+            && changed().hasOnly(['userId', 'accountName', 'linkedAt', 'preferred', 'unit', 'profile', 'updatedAt'])
+            && request.resource.data.get('userId', null) in [null, request.auth.uid]);
+    }
+
+    // ---- inspection records
+    match /orgs/{id} {
+      allow read: if isMember();
+      allow create, delete: if isEditor();
+      allow update: if isEditor()
+        || (isMember() && !changed().hasAny(['assignedTo', 'assignLog', 'type', 'target']));
+    }
+    match /ledgers/{id} {
+      allow read: if isMember();
+      allow create, update: if isMember();
+      allow delete: if isEditor();
+    }
+    match /projects/{id} {
+      allow read: if isMember();
+      allow create, update: if isMember();
+      allow delete: if isEditor();
+    }
+    match /inbox/{id} {
+      allow read: if isMember();
+      allow create: if isMember();
+      allow update, delete: if isMember();
+    }
+
+    // ---- monthly statistics
+    match /er/{id} {            // Emergency Reporting imports, one doc per month x inspector
+      allow read: if isMember();
+      allow write: if isEditor();
+    }
+    match /stats/{id} {         // board as entered by hand + monthly manual totals
+      allow read: if isMember();
+      allow write: if isEditor();
+    }
+    match /log/{id} {           // personal activity logs, id = <team id>__<YYYY-MM>
+      allow read: if isMember();
+      allow create, update: if isEditor()
+        || (isMember() && id.matches('^' + myTeam() + '__[0-9]{4}-[0-9]{2}$')
+            && request.resource.data.member == myTeam());
+      allow delete: if isEditor();
+    }
+
+    // ---- settings
+    match /config/{id} {
+      allow read: if isMember();
+      allow write: if isCaptain();
+    }
+
+    // ---- per-person private data (pinned districts/schools)
+    match /data/users/{uid}/{rest=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}

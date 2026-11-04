@@ -1,0 +1,27 @@
+{
+  "name": "education-division-insight",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "HCFMO Prevention Bureau school inspection tracking (Firebase + PWA)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "emulators": "firebase emulators:start --project demo-edi",
+    "import:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/import-data.mjs --project demo-edi",
+    "import": "node scripts/import-data.mjs",
+    "test": "node tests/platform.test.mjs && node tests/app-smoke.mjs",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-edi \"node --test tests/rules.test.mjs\"",
+    "deploy": "npm run build && firebase deploy --only hosting,firestore"
+  },
+  "dependencies": {
+    "firebase": "^13.1.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "esbuild": "^0.28.2",
+    "firebase-admin": "^14.5.0",
+    "firebase-tools": "^15.34.2",
+    "playwright": "1.63.0",
+    "xlsx": "0.18.5"
+  }
+}

@@ -1,0 +1,26 @@
+/* supervisor attention + flags */
+.attgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.att{border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.att.warn{border-left-color:var(--bad)}
+.atth{display:flex;gap:8px;align-items:baseline}.atth b{font:700 28px/1 var(--f-display)}.att.warn .atth b{color:var(--bad)}.atth span{font-weight:600;font-size:13px;flex:1}
+.attb{display:flex;flex-direction:column;gap:4px;font-size:12.5px}.attrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.attrow.click{cursor:pointer}.attrow.click:hover{color:var(--accent)}
+.flagbox{display:flex;flex-direction:column;gap:4px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.flagnote{font-size:12.5px;font-style:italic}.flagacts{display:flex;gap:6px;flex-wrap:wrap}
+/* command summary */
+.briefhead h2{margin:2px 0 0;font:700 30px/1.05 var(--f-display);text-transform:uppercase}
+.briefgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.kv b{font-size:15px}.kv small{grid-column:1/-1;font-size:11.5px}
+.brief .recon{margin-top:10px}
+.hl{display:flex;gap:12px;align-items:flex-start;padding:8px 0}.hl ul{margin:4px 0 0;padding-left:18px;font-size:13px}
+@media (max-width:1000px){.attgrid,.briefgrid{grid-template-columns:1fr}}
+@media print{
+  .rail,.topbar,.noprint,#toastroot{display:none!important}
+  html,body{background:#fff!important;height:auto!important} .shell,.shell>*:not(.rail):not(.topbar){display:block!important;width:auto!important;height:auto!important;overflow:visible!important;position:static!important}
+  .content{padding:0!important;margin:0!important;gap:8px!important;font-size:10.5px}
+  .briefhead h2{font-size:22px} .stt{padding:6px 8px} .stt b{font-size:22px} .stt .sub{font-size:9.5px}
+  .panel .ph{padding:5px 10px} .panel .pb{padding:6px 10px} .kv{padding:3px 0;font-size:10.5px} .kv b{font-size:11.5px} .kv small{font-size:9px}
+  .brief .recon{font-size:10px;padding:5px 8px;margin-top:5px} .panel h3{font-size:13px} .sttiles{gap:6px}
+  .issues{font-size:10px;gap:1px} .briefgrid{gap:8px} .method{font-size:9px} .hl{padding:2px 0}
+  .panel,.stt{break-inside:avoid;box-shadow:none} .sttiles{grid-template-columns:repeat(5,1fr)} .briefgrid{grid-template-columns:1fr 1fr}
+  @page{size:letter;margin:.45in}
+}

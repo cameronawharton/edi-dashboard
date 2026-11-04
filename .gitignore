@@ -1,0 +1,11 @@
+# Real records and people's photos never go in git.
+data/
+dist/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+firebase/public/team/
+firebase/public/config.js
+firebase/public/index.html
+firebase/public/shim.js

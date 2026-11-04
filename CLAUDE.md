@@ -1,0 +1,88 @@
+# Education Division Insight (EDI)
+
+School inspection and monthly prevention statistics dashboard for the Harris County Fire Marshal's Office (HCFMO), Prevention Bureau, Education Division. Owner: Capt. Cameron Wharton.
+
+Live today as a claude.ai Artifact: **https://claude.ai/artifact/G97SvvhwHuddo6Ve8Bcy5n** (private, shared by Cameron from its Share menu). Its data lives in that artifact's database, not in this repo.
+
+Read this file, then `docs/roles.md` (who sees what, decided Nov 3 2026), then `docs/domain.md` before touching inspections, coverage or the board.
+
+## How Cameron works (follow this)
+
+- Direct, opinionated recommendations, not menus of hedged options. Every number must hold up when questioned: say where it comes from.
+- One decision at a time. Lock it, build it, ship it, then the next. He tests by using the page.
+- No em dashes anywhere: UI copy, commit messages, replies. Plain words, short sentences.
+- He often works from his phone. Keep replies short and give steps he can do in a phone browser.
+- Real records and people's photos never go in git. `data/` is ignored. The repo is private.
+
+## Layout
+
+```
+dashboard/base.html        the original single-file app (markup, CSS, JS). Treat as read-only: change it through hooks in build.py
+dashboard/parts/           modules spliced in at build time (CSS and JS, concatenated in the order build.py lists)
+  stats.js/.css            Emergency Reporting (ER) import, the monthly board, outcomes, hours panel, uploads grid
+  detail.js/.css           district logos, street maps around schools, tap-to-call/email (telHref)
+  people.js/.css           team, profiles, header identity chip, divisions, district assignments
+  actions.js               action codes: board mapping, inspection assist check, report detail modal
+  command.js/.css          supervisor "Needs attention" panel, flag explain/accept/send back, Command summary page + print
+dashboard/build.py         splices parts into base.html via exact-match rep() hooks, injects assets/geo_map.json -> dist/tracker.html
+dashboard/harness.py       dist/test.html (data/seed) or dist/live.html (data/live) with a fake database for Playwright
+dashboard/tests/           smoke.js (every view, fails on page errors), mock_head.html (fake db + claude.use shim)
+dashboard/assets/          geo_map.json (Census TIGER), logos/<org>/, streets/<org>.json. Published next to the page
+tools/er/                  Python parsers proven on October 2026: inspection report PDFs, action-code report PDF, reconcile, assist check
+firebase/                  Firebase/PWA port started Oct 29, then tabled. Its src/app.html is STALE (predates stats, actions, command).
+                           When the app move happens, regenerate it from dist/tracker.html; keep its shim, rules and build.
+docs/                      roles.md (role decisions), domain.md (inspection rules)
+data/  (not in git)        seed/ and live/ database snapshots for local testing
+dist/  (not in git)        build output
+```
+
+`build.py` asserts every hook matches exactly once. If base.html text a hook targets is missing, the build stops: fix the hook, never loosen the assert.
+
+## Build, test, publish
+
+```
+python3 dashboard/build.py                      # dist/tracker.html (+ logos/, streets/)
+python3 dashboard/harness.py live               # dist/live.html from data/live
+node dashboard/tests/smoke.js live              # Playwright; needs `playwright` resolvable (NODE_PATH=$(npm root -g))
+```
+Refresh `data/live` before testing against real data: ArtifactData `list` each collection with `out_dir: data/live` (collections below).
+Publish: Artifact publish `file_path: dist/tracker.html` with `url` set to the artifact above. Team photos (`team/*.jpg`) are already published on the artifact and are kept between publishes; don't remove them.
+Screenshot what you changed before publishing. Check a printed page with `page.pdf` when touching print styles (Command summary must stay one letter page).
+
+## Data (artifact database collections)
+
+| collection | doc id | holds |
+|---|---|---|
+| orgs | org slug | district/operator: name, type (ISD, Charter, Private, Daycare), facilities, contacts[{role,name,phone,email}], assignedTo, logo |
+| ledgers | `<org>__<season>` e.g. `klein-isd__2026-27` | visits {id: {facility,date,kind,result,coi,inspector,source,erKey,...}} |
+| er | `<YYYY-MM>__<member>` | one inspector's month from the ER export: rows[{k,id,occ,addr,city,date,tin,tout,mins,add,type,row,coi,res,fac,org,rot, src,rt,fl,nx,po}] |
+| actions | `<YYYY-MM>__<member>` | action-code entries: rows[{c,cn,id,occ,addr,date,desc,h,hs}] |
+| flags | `<YYYY-MM>__<member>__<date>__<occ>__<hash>` | assist flag review: note, noteBy, status (explained, accepted, sentback), reviewBy |
+| stats | `<division>-<year>` | board as entered (board.k.MM), manual entries (manual.k.MM), days worked (days.member.MM), boardIssues |
+| team | person slug | name, preferred, role (captain, lieutenant, sergeant, inspector, specialist), division (education, county), field, unit, userId, photo |
+| log | `<member>__<YYYY-MM>` | activity log entries. RETIRED as an input (Nov 3): everything goes through ER |
+| projects, config, inbox | | construction projects, settings, intake |
+
+Write with ArtifactData. Pin `if_version` on every existing doc. Prefer one `batch` per change. When importing, run the app's own logic (erPlan, renderERI, erSave) in the harness and write the docs it produces, instead of hand-building records.
+
+## Rules that are settled
+
+- **Season** runs Aug 1 to May 31. ISD target 30% of campuses per season (rotation letter group); charters, privates, daycares 100%.
+- **ER export** ("Completed Inspections for Inspectors per Inspection Type"): a row is a date under an `Inspection Type:` heading. Check the footer count against rows read. Digits-only occupancy IDs get `FMO-`. Result is read from the notes text (`erResult`). Reimporting a month for a person replaces it.
+- **Rotation visits**: 352-Annual School, 352-School Follow-up, and 352-Customer Request (Licensed) for daycares only. 233 construction types link to the school but never count toward rotation.
+- **Inspection report PDFs** (one per approved inspection, TCPDF) carry the overall result text, failed checklist items with notes, next inspection. October 2026 matched the export 72 of 72; 5 more were approved after the export. Strip "Printed on..." and "Inspection Topics:" lines from failed items.
+- **Action codes -> board**: INSP Inspection Assist (row 39), VISIT Site Visit (40), KNOX (41), FMO Issued (46), FMO cleared (47), VIOL (48), FPSN Fire Protection Notifications (44). COI, COC, CCOC, NTF (note to file), OCR, SWO, Occupant Certificate are shown but never summed.
+- **Prevention action source precedence**: monthly hand entry > action codes > team log > board as entered.
+- **Hours**: ER on-site + additional minutes, plus hours written in action-code descriptions ("- 2 hours", "30 min", "8:00 AM to 10:00 AM"). Target 6.5 per day. Days worked default to weekdays in the month; managers can override (Outlook calendar upload will replace this).
+- **Assist check**: match the named person (last name, first name, or nickname such as Matt) on the same date and occupancy ID; within 30 minutes of their on-site time is a match. Categories: match, no hours, longer, shorter, different location, no inspection that day, outside team, no name.
+- **Highlights** on the Command summary: a person is named only if they meet two of four in the month (6.5 h/day with every flag cleared; best first-visit pass rate, min 5; fastest hazard closure, min 2; rotation finished in all assigned districts). Otherwise division numbers only.
+
+## Open items, in order
+
+1. Inspection email route: ER emails a PDF per approved inspection. Send them to a mailbox the app reads so stats land within minutes, no monthly upload.
+2. App move (Firebase PWA, installable, real sign-in per person): needed for "My month" with own hours only, and role permissions.
+3. Outlook calendar (.ics) upload for days worked, leave and training.
+4. Action-code importer in the page (today they are loaded by script from the PDF).
+5. "Create EDU": standardize the team's action codes to one board line each, hours always written the same way.
+6. Contacts: Text option, "Log this call" onto the school record, call/email on team profiles.
+7. Questions waiting on Cameron: board line for 233-Special Events; whether Sgt. Regalado is held to the 6.5 hour target.

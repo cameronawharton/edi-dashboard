@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body><script>
+(function(){const DATA=__DATA__;const subs=[];
+function merge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')merge(a[k],b[k]);else a[k]=b[k];}return a;}
+function emit(){subs.forEach(s=>{const c=DATA[s.col]||{};s.fn({docs:Object.entries(c).map(([id,d])=>({id,exists:true,data:()=>JSON.parse(JSON.stringify(d))}))});});}
+const db={collection:col=>({onSnapshot:(fn)=>{subs.push({col,fn});setTimeout(()=>fn({docs:Object.entries(DATA[col]||{}).map(([id,d])=>({id,exists:true,data:()=>JSON.parse(JSON.stringify(d))}))}),30);return()=>{};}}),
+ doc:p=>{const [c,id]=p.split('/');return{update:async d=>{if(!DATA[c]||!DATA[c][id])throw{code:'invalid_argument'};merge(DATA[c][id],JSON.parse(JSON.stringify(d)));emit();},set:async d=>{(DATA[c]=DATA[c]||{})[id]=JSON.parse(JSON.stringify(d));emit();},delete:async()=>{delete DATA[c][id];emit();}}}};
+window.__DATA=DATA;
+window.claude={use:async n=>n==='db'?db:n==='user'?{me:async()=>({id:'u_test',name:'Cameron'}),can:async()=>true}:n==='downloads'?{save:async x=>{window.__saved=x;return{}}}:null};})();
+</script>
