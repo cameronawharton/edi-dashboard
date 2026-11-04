@@ -10,6 +10,8 @@ const ROLE_ORDER=["captain","lieutenant","sergeant","inspector","specialist"];
 const DIVS={education:"Education",county:"FSS / County Operations"};
 const divOf=t=>(t&&t.division)||"education";
 const HOURS_TARGET=6.5; // average hours worked per day the bureau expects at minimum
+/* supervisors exempt from the hours target (Nov 4 2026): team.hoursExempt. Their hours still show, without a target */
+const hoursExempt=id=>!!(S.team[id]&&S.team[id].hoursExempt);
 const BANNERS={standard:{label:"Standard"}}; // more presets later; profile.banner picks one
 const LOG_KINDS=[...BOARD.filter(b=>b.manual&&!b.measure&&b.grp==="actions"),BROW.oppapp];
 const roleOf=t=>ROLES[(t&&t.role)||"inspector"]||ROLES.inspector;

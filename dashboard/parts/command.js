@@ -33,7 +33,7 @@ document.addEventListener("click",async e=>{ const t=e.target;
 function attentionPanel(month,div){ div=div||"education"; const M=model(); const i=+month.slice(5)-1, year=+month.slice(0,4);
   const field=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)===div).map(([id])=>id);
   const haveER=erDocsFor(month,div).length>0;
-  const low=haveER?field.map(id=>[id,personHours(id,month)]).filter(([,h])=>h.perDay<HOURS_TARGET).sort((a,b)=>a[1].perDay-b[1].perDay):[];
+  const low=haveER?field.filter(id=>!hoursExempt(id)).map(id=>[id,personHours(id,month)]).filter(([,h])=>h.perDay<HOURS_TARGET).sort((a,b)=>a[1].perDay-b[1].perDay):[];
   const A=assistCheck(month,div).filter(o=>FLAGGED.includes(o.check)); const open=A.filter(o=>["open","sentback"].includes(flagState(o))), review=A.filter(o=>flagState(o)==="explained");
   const behind=div!=="education"?[]:Object.values(M.orgStats).filter(s=>s.behind).sort((a,b)=>(b.expected-b.coverage)*b.active-(a.expected-a.coverage)*a.active);
   const box=(n,title,body,jump,warn)=>`<div class="att ${n?warn||"warn":"ok"}"><div class="atth"><b class="num">${n}</b><span>${title}</span>${jump&&n?`<button class="btn sm ghost" type="button" data-jump="${jump}">Review</button>`:""}</div>${n?`<div class="attb">${body}</div>`:`<div class="attb faint">Nothing here.</div>`}</div>`;
@@ -50,7 +50,7 @@ function attentionPanel(month,div){ div=div||"education"; const M=model(); const
 function highlightCriteria(month){ const field=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)==="education").map(([id])=>id); const M=model();
   const A=assistCheck(month).filter(o=>FLAGGED.includes(o.check)); const unexplained=new Set(A.filter(o=>flagState(o)!=="accepted").map(o=>o.a.member));
   const O=erOutcomes(month,"education"); const res={}; field.forEach(id=>res[id]={c:[]});
-  if(erDocsFor(month,"education").length) field.forEach(id=>{ const h=personHours(id,month); if(h.perDay>=HOURS_TARGET&&!unexplained.has(id)) res[id].c.push(`${h.perDay.toFixed(1)} hours per day with every flag cleared`); });
+  if(erDocsFor(month,"education").length) field.filter(id=>!hoursExempt(id)).forEach(id=>{ const h=personHours(id,month); if(h.perDay>=HOURS_TARGET&&!unexplained.has(id)) res[id].c.push(`${h.perDay.toFixed(1)} hours per day with every flag cleared`); });
   const fv={}; O.first.forEach(r=>{ const id=r.member||teamIdFor(r.inspName); if(!res[id]) return; const o=fv[id]=fv[id]||{n:0,p:0}; o.n++; if(r.res!=="fail") o.p++; });
   const fvR=Object.entries(fv).filter(([,o])=>o.n>=5).map(([id,o])=>[id,o.p/o.n,o]); const top=Math.max(-1,...fvR.map(x=>x[1]));
   fvR.filter(x=>x[1]===top).forEach(([id,r,o])=>res[id].c.push(`best first-visit pass rate, ${pct(r)} of ${o.n}`));
@@ -71,7 +71,7 @@ function vBrief(M){ const st=S.ui.st; if(!st.month) st.month=defaultMonth(); con
   const recent=done/wkIn; const finishWk=recent?need/recent:Infinity; const finish=isFinite(finishWk)?new Date(Date.parse(today)+finishWk*6048e5).toISOString().slice(0,10):null; const needWk=wkLeft?need/wkLeft:0;
   const onTrack=recent>=needWk; const perInsp=field.length?needWk/field.length:0; const gap=Math.max(0,needWk-recent);
   /* workload: spread without names */
-  const hrs=field.map(id=>personHours(id,month).perDay).filter(x=>x>0), loads=field.map(id=>Object.values(M.orgStats).filter(s=>s.org.assignedTo===id&&s.active).reduce((s,x)=>s+x.active,0));
+  const hrs=field.filter(id=>!hoursExempt(id)).map(id=>personHours(id,month).perDay).filter(x=>x>0), loads=field.map(id=>Object.values(M.orgStats).filter(s=>s.org.assignedTo===id&&s.active).reduce((s,x)=>s+x.active,0));
   const unassigned=Object.values(M.orgStats).filter(s=>s.active&&!s.org.assignedTo);
   /* risk: repeat failures across every imported month */
   const allRows=Object.values(S.er).filter(d=>(d.division||"education")==="education"&&d.month<=month).flatMap(d=>d.rows.map(erLive));
