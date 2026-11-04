@@ -70,7 +70,7 @@ const BROW=Object.fromEntries(BOARD.map(b=>[b.k,b]));
 const erNorm=s=>String(s||"").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]/g,"").replace(/s$/,"");
 const ERMAP={}; BOARD.forEach(b=>(b.er||[]).forEach(t=>{ ERMAP[erNorm(t)]=b.k; }));
 /* families of types that Emergency Reporting names several ways ("233-FPS-Access Controls", "233-OPI-Operational Permit Inspection", "352-County Owned Building") */
-const ERFAMILY=[[/^233fps/,"fps233"],[/^233(opi|operationalpermit)/,"oppinsp"],[/^352county/,"county"],[/^352annualschool/,"annual"],[/^352schoolfollow/,"schfu352"],[/^233schoolfollow/,"schfu233"],[/^233precover/,"precover"]];
+const ERFAMILY=[[/^233countyown/,"cfcc"],[/^233fps/,"fps233"],[/^233(opi|operationalpermit)/,"oppinsp"],[/^352county/,"county"],[/^352annualschool/,"annual"],[/^352schoolfollow/,"schfu352"],[/^233schoolfollow/,"schfu233"],[/^233precover/,"precover"]];
 const erRowFor=type=>{ const n=erNorm(type); if(ERMAP[n]) return ERMAP[n]; const f=ERFAMILY.find(([re])=>re.test(n)); return f?f[1]:null; };
 const GRP_LABEL={permit:"Permit based",existing:"Existing building",actions:"Prevention actions",fss:"FSS",boarding:"Boarding homes"};
 
@@ -115,7 +115,7 @@ function parseERGrid(grid,fileName){
   if(out.declared.count!=null && out.declared.count!==out.rows.length) out.warnings.push(`The report footer says ${out.declared.count} inspections but ${out.rows.length} rows were read.`);
   if(out.oddIds) out.warnings.push(`Occupancy ID typed off-format in Emergency Reporting, read anyway: ${out.oddIds.join("; ")}. Worth correcting at the source so the occupancy history stays linked.`);
   if(!out.rows.length) out.warnings.push("No inspection rows were found. Is this the Completed Inspections for Inspectors per Inspection Type report?");
-  const bad=[...new Set(out.rows.filter(x=>!x.row).map(x=>x.type))]; if(bad.length) out.warnings.push(`Not on the Education board: ${bad.join(", ")}. These count in the inspector totals but fill no board line.`);
+  const bad=[...new Set(out.rows.filter(x=>!x.row).map(x=>x.type))]; if(bad.length) out.warnings.push(`Not on the board: ${bad.join(", ")}. These count in the inspector totals but fill no board line.`);
   return out; }
 
 /* match ER rows to tracker facilities; decide which count toward the school rotation */

@@ -1,6 +1,6 @@
-# Education Division Insight (EDI)
+# CO/ED Division Insight (formerly Education Division Insight, EDI)
 
-School inspection and monthly prevention statistics dashboard for the Harris County Fire Marshal's Office (HCFMO), Prevention Bureau, Education Division. Owner: Capt. Cameron Wharton.
+School inspection and monthly prevention statistics dashboard for the Harris County Fire Marshal's Office (HCFMO), Prevention Bureau, County Operations and Education (CO/ED) Division. Renamed Nov 4 2026; build.py swaps the name in base.html. Owner: Capt. Cameron Wharton.
 
 Live today as a claude.ai Artifact: **https://claude.ai/artifact/G97SvvhwHuddo6Ve8Bcy5n** (private, shared by Cameron from its Share menu). Its data lives in that artifact's database, not in this repo.
 
@@ -72,7 +72,7 @@ Write with ArtifactData. Pin `if_version` on every existing doc. Prefer one `bat
 - **Rotation visits**: 352-Annual School, 352-School Follow-up, and 352-Customer Request (Licensed) for daycares only. 233 construction types link to the school but never count toward rotation.
 - **Inspection report PDFs** (one per approved inspection, TCPDF) carry the overall result text, failed checklist items with notes, next inspection. October 2026 matched the export 72 of 72; 5 more were approved after the export. Strip "Printed on..." and "Inspection Topics:" lines from failed items.
 - **Action codes -> board**: INSP Inspection Assist (row 39), VISIT Site Visit (40), KNOX (41), FMO Issued (46), FMO cleared (47), VIOL (48), FPSN Fire Protection Notifications (44). COI, COC, CCOC, NTF (note to file), OCR, SWO, Occupant Certificate are shown but never summed.
-- **County Operations** (decided Nov 4 2026): Victor King and Priscilla Gonzales: 233 inspections go to the matching 233 line, everything else to County Buildings Annual Inspections. FSS specialists (Bowdoin, Darjean, Eldridge, Gabriel): every inspection goes to FSS Activities, Inspections (fss4) and nowhere else. Their non-FSS action codes use the same mapping as Education.
+- **County Operations** (decided Nov 4 2026): Victor King and Priscilla Gonzales: 233 inspections go to the matching 233 line (233-County Owned Building counts as 233-CFCC), everything else to County Buildings Annual Inspections. FSS specialists (Bowdoin, Darjean, Eldridge, Gabriel): every inspection goes to FSS Activities, Inspections (fss4) and nowhere else. Their non-FSS action codes use the same mapping as Education.
 - **FSS codes -> FSS Activities**: FSS-V Site Visit (fss3), FSS-COS Call Out For Service = On call (fss5), FSS-TW Trirga Work Task = Tririga received (fss1), FSS-TS Tririga Status = Tririga cleared (fss2) only when the entry says closed/cleared/completed/resolved, otherwise Other request; every other FSS code (Administration, Assist Other Groups, Consultation, Plan Review x3, Training/CE) is Other request (fss6). FSS codes count on whichever division the person belongs to.
 - **ER exports must be one inspector per file.** A multi-inspector export is grouped by inspection type and has no inspector per row; do not attribute rows from signatures.
 - **Action codes export** (.xls "Occupancies for Action Codes for Date Range") covers the whole bureau with a name per row: `tools/er/action_codes_xls.py` keeps team members only. It may omit codes not selected in ER (CCOC, OCR); keep those rows from an earlier source when replacing a month.

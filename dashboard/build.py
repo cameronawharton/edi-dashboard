@@ -56,6 +56,9 @@ rep('''...new Set(vs.map(v=>v.inspector||"_none").filter(x=>!S.team[x]))]''','''
 rep('''${c.phone?`<div class="mono">${esc(c.phone)}</div>`:""}${c.email?`<div class="email mono">${esc(c.email)}</div>`:""}''','''${c.phone?`<a class="mono clink" href="${telHref(c.phone)}">${esc(c.phone)}</a>`:""}${c.email?`<a class="email mono clink" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`:""}''')
 rep('''<span class="ln"><span class="mono">${esc(c.phone)}</span>''','''<span class="ln"><a class="mono clink" href="${telHref(c.phone)}">${esc(c.phone)}</a>''')
 rep('''<span class="ln"><span class="mono">${esc(c.email)}</span>''','''<span class="ln"><a class="mono clink" href="mailto:${esc(c.email)}">${esc(c.email)}</a>''')
+# app name (Nov 4 2026): Education Division Insight -> CO/ED Division Insight
+assert s.count("Education Division Insight")==4, s.count("Education Division Insight")
+s=s.replace("Education Division Insight","CO/ED Division Insight")
 html=s.replace('__GEO__',open(os.path.join(HERE,'assets','geo_map.json')).read())
 os.makedirs(DIST,exist_ok=True); open(os.path.join(DIST,'tracker.html'),'w').write(html)
 for sub in ('logos','streets'):
