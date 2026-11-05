@@ -2,6 +2,9 @@
 S.flags=S.flags||{};
 const SUP_ROLES=["captain","lieutenant","sergeant"];
 const isSupervisor=()=>{ const m=myTeamMember(); return !!(m&&SUP_ROLES.includes(m.role)); };
+/* a signed-in inspector or specialist: trimmed nav, lands on My work, sees only their own hours. Cosmetic until the app move gives real sign-in */
+const fieldUser=()=>{ const m=myTeamMember(); return !!m&&!SUP_ROLES.includes(m.role); };
+const seesHoursOf=id=>{ const m=myTeamMember(); return !m||!fieldUser()||m.id===id; };
 const FLAGGED=["longer","shorter","place","noday"];
 /* a stable id for an assist entry, so an explanation survives a reupload of the same entry */
 function flagId(a){ let h=0; const s=String(a.desc||""); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;

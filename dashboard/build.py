@@ -6,7 +6,7 @@ import os,shutil
 HERE=os.path.dirname(os.path.abspath(__file__)); DIST=os.path.join(os.path.dirname(HERE),'dist')
 s=open(os.path.join(HERE,'base.html')).read()
 P=os.path.join(HERE,'parts')+'/'
-css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read()+open(P+'county.css').read()+open(P+'calendar.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()+'\n'+open(P+'county.js').read()+'\n'+open(P+'calendar.js').read()
+css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read()+open(P+'county.css').read()+open(P+'calendar.css').read()+open(P+'work.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()+'\n'+open(P+'county.js').read()+'\n'+open(P+'calendar.js').read()+'\n'+open(P+'work.js').read()
 def rep(a,b):
     global s
     assert s.count(a)==1,(a[:80],s.count(a)); s=s.replace(a,b)
@@ -14,10 +14,10 @@ rep('@media (prefers-reduced-motion:reduce){*{transition:none!important;animatio
 rep('\nboot();\n</script>','\n'+js+'\nboot();\n</script>')
 rep('["insights","Insights"],','["insights","Insights"],["stats","Monthly stats"],["brief","Command summary"],')
 rep('["map","Map"],','["map","Map"],["calendar","Inspection calendar"],["county","County facilities"],')
-rep('insights:vInsights,','insights:vInsights,stats:vStats,brief:vBrief,county:vCounty,calendar:vCalendar,person:vPerson,')
+rep('insights:vInsights,','insights:vInsights,work:vWork,stats:vStats,brief:vBrief,county:vCounty,calendar:vCalendar,person:vPerson,')
 rep('el.innerHTML=fn(M);','el.innerHTML=S.ui.view==="person"?vPerson(M,S.ui.param):fn(M);')
 rep('sub("inbox","inbox");','sub("inbox","inbox"); sub("er","er"); sub("stats","stats"); sub("log","log"); sub("actions","actions"); sub("flags","flags"); sub("cfac","cfac"); sub("windows","windows");')
-rep('const fn={overview','if((S.ui.view==="stats"||S.ui.view==="brief"||S.ui.view==="calendar")&&!S.loaded.ledgers){ el.innerHTML=`<div class="skeleton">Loading…</div>`; return; }\n  const fn={overview')
+rep('const fn={overview','if((S.ui.view==="stats"||S.ui.view==="brief"||S.ui.view==="calendar"||S.ui.view==="work")&&!S.loaded.ledgers){ el.innerHTML=`<div class="skeleton">Loading…</div>`; return; }\n  const fn={overview')
 rep("""<span class="faint">No inspections on record.</span><span></span></div>`}</div>""","""<span class="faint">No inspections on record.</span><span></span></div>`}</div>${erActivityHTML(fid)}""")
 # routing
 rep('''if(h.startsWith("org-")){S.ui.view="org";S.ui.param=h.slice(4);}''','''if(h.startsWith("org-")){S.ui.view="org";S.ui.param=h.slice(4);} else if(h==="me"||h.startsWith("person-")){S.ui.view="person";S.ui.param=h==="me"?"me":h.slice(7); if(S.ui.pp) S.ui.pp.month=null;}''')
@@ -26,7 +26,7 @@ rep('''const title = S.ui.view==="org" ? (S.orgs[S.ui.param]?.name||"District") 
 # header chip
 rep('''<button class="btn primary" id="logbtn" type="button">+ Log inspection</button>''','''<button class="mechip" id="mechip" type="button" aria-label="Your profile"></button>
       <button class="btn primary" id="logbtn" type="button">+ Log inspection</button>''')
-rep('''  $("#logbtn").hidden=!S.canWrite;''','''  $("#logbtn").hidden=!S.canWrite; { const mc=$("#mechip"); if(mc) mc.innerHTML=meChipHTML(); }''')
+rep('''  $("#logbtn").hidden=!S.canWrite;''','''  $("#logbtn").hidden=!(S.canWrite&&isSupervisor()); { const mc=$("#mechip"); if(mc) mc.innerHTML=meChipHTML(); }''')
 rep('''<span>${S.me.name?esc(S.me.name):"Signed in"} · ${myTeamMember()?esc(myTeamMember().name):'<a href="#team">link your name</a>'}</span>''','''<span>${myTeamMember()?`<a href="#me">${esc(memberName(myTeamMember().id,"rank"))}</a>`:`${S.me.name?esc(S.me.name):"Signed in"} · <a href="#" data-act="claim-open">choose your profile</a>`}</span>''')
 # team page: field members only in productivity cards, leadership strip, photos, profile links
 rep('''const ids=[...Object.keys(S.team).filter(k=>S.team[k].active!==false),''','''const ids=[...Object.keys(S.team).filter(k=>isField(S.team[k])&&divOf(S.team[k])===(S.ui.teamDiv||"education")),''')
@@ -76,6 +76,12 @@ rep('    ${isISD?`<td>${rotBadge(f.rotation,M.L)}</td>`:""}<td>${f.state==="excl
 # Rotation fully removed (Nov 4 2026): exact base.html fragments and their replacements, applied in order.
 import json as _json
 for _a,_b in _json.load(open(os.path.join(HERE,'derotate.json'))): rep(_a,_b)
+# My work (Nov 4 2026): inspector landing page, trimmed nav for inspectors and specialists, manual logging left to supervisors
+rep('const VIEWS=[["overview","Overview"],','const VIEWS=[["overview","Overview"],["work","My work"],')
+rep('$("#nav").innerHTML=VIEWS.map(','$("#nav").innerHTML=navViews().map(')
+rep('function render(){\n  const M = S.loaded.orgs','function render(){\n  landWork();\n  const M = S.loaded.orgs')
+assert s.count('${S.canWrite&&f.state!=="excluded"?`<button class="btn sm" data-act="log"')==2
+s=s.replace('${S.canWrite&&f.state!=="excluded"?`<button class="btn sm" data-act="log"','${S.canWrite&&isSupervisor()&&f.state!=="excluded"?`<button class="btn sm" data-act="log"')
 # app name (Nov 4 2026): Education Division Insight -> CO/ED Division Insight
 assert s.count("Education Division Insight")==4, s.count("Education Division Insight")
 s=s.replace("Education Division Insight","CO/ED Division Insight")

@@ -52,3 +52,9 @@ Rule that governs everything: all work is entered in Emergency Reporting (ER). T
 - **Nudges:** no routine emails (apathy). Urgent items only. The key one: a follow-up date from a failed inspection with no matching Outlook appointment.
 - **Peers:** inspectors see teammates' windows, appointments and progress, never their hours.
 - **Biggest time waster today:** spreadsheets.
+
+## Built from the interview (Nov 4 2026, artifact v23)
+- My work is live: inspectors and specialists land on it with a five-item nav (county: three). Coming up, Follow-ups, Fix in ER, My numbers, Team. Nothing is typed into it.
+- "Email to schedule" opens a message to the district's point of contact listing the campuses still due in the window. "Add to Outlook" on a follow-up saves an appointment titled type and campus on the ER next-inspection date, so the later Outlook feed can match it.
+- Removed for inspectors: "+ Log inspection", per-row Log buttons, the profile activity log, Needs attention, ER import, other people's hours.
+- Waiting on the app move: checking Outlook for a booked visit (the urgent nudge), push alerts, real per-person privacy.

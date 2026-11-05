@@ -1,0 +1,50 @@
+/* My work */
+.wkhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.wkhead h2{margin:2px 0;font:700 26px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.wkhead select{max-width:100%}
+.wkcols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:14px;align-items:start}
+.wkmain,.wkside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.wkstack{display:flex;flex-direction:column;gap:12px}
+.wkblk{border:1px solid var(--line);border-radius:8px;padding:12px}
+.wkbh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.wkbh h4{margin:2px 0;font:700 18px/1.2 var(--f-display)}
+.wkbh .faint{font-size:12.5px}
+.wkpace{margin:6px 0 0;font-size:13.5px}
+.wkpace .num{font-size:18px}
+.wklead{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;padding:8px 10px;background:var(--sunk);border-radius:6px}
+.wklead .eyebrow{width:100%}
+.wkc{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wkc small{color:var(--ink3);font-size:12px}
+.wklist{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column}
+.wklist li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)}
+.wklist li:first-child{border-top:0}
+.wkfac{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit}
+button.wkfac{cursor:pointer}
+button.wkfac:hover b{text-decoration:underline}
+.wkfac b{font-size:13.5px;font-weight:600}
+.wkfac small{font-size:12px;color:var(--ink3)}
+.wkacts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;flex:none;max-width:55%}
+.wkbehind{display:flex;flex-direction:column;gap:4px}
+.wktiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.wktiles>div{display:flex;flex-direction:column;gap:2px;background:var(--sunk);border-radius:8px;padding:10px 12px}
+.wktiles b{font:700 24px/1 var(--f-display)}
+.wktiles span{font-size:12.5px}
+.wktiles small{font-size:11.5px;color:var(--ink3)}
+.wkmate{display:flex;gap:10px;align-items:center;cursor:pointer;padding:4px;border-radius:6px}
+.wkmate:hover{background:var(--sunk)}
+.wkmn{display:flex;flex-direction:column;min-width:0;flex:1}
+.wkmate small{font-size:12px;color:var(--ink3)}
+@media (max-width:900px){.wkcols{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .wklist li{flex-direction:column;align-items:stretch;gap:6px}
+  .wkacts{max-width:none;justify-content:flex-start}
+  .wkacts .btn{min-height:36px;padding-inline:12px}
+  .wklead .btn{min-height:36px}
+  .wkhead h2{font-size:22px}
+  .wkhead>.av{display:none}
+  .wklead .wkc{width:100%}
+}
+/* calendar on a phone: a list per person instead of the week grid */
+.calmobile{display:none}
+.calmw{display:flex;gap:8px;align-items:center;cursor:pointer}
+@media (max-width:760px){.calgantt{display:none}.calmobile{display:block}}
