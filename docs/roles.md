@@ -39,3 +39,16 @@ Rule that governs everything: all work is entered in Emergency Reporting (ER). T
 ## Contacts (added Nov 3)
 - Every phone number is a tap-to-call link and every email opens a new message, on the district page and the map side panel. Done in the current dashboard.
 - App phase: add the same links to team profiles, add Text, and add "Log this call" so the contact shows on the school's record.
+
+## Inspector interview (Nov 4 2026, Cameron answering as an inspector)
+- **When used:** during admin time (scheduling, email cleanup), mostly at a desk. Not a between-stops field tool. ER reports are entered in the truck after the inspection when possible, otherwise back at the office.
+- **How work happens:** inspections are scheduled weeks ahead with each district's facilities lead. Call-ahead and email relationships are paramount.
+- **One place for everything (hard rule):** no logging anything twice. Appointments live in Outlook, inspections in ER, contacts in the dashboard. The dashboard reads; it never asks for a second entry.
+  - Outlook appointments are titled "type and campus" (e.g. "Annual - Cypress Falls HS"). Wanted: a live feed from each inspector's Outlook calendar.
+  - The ER report's "Next inspection date" is the follow-up date (inconsistent today, should be exact in practice).
+  - Pass: the school gets the inspection report. Fail: the report plus a scheduled follow-up date.
+  - Contacts: the assigned inspector keeps their districts' contacts current in the dashboard.
+- **My work page, top to bottom:** actionable items first: who is coming up (campuses to schedule and booked appointments), follow-ups needed, then stats nearby.
+- **Nudges:** no routine emails (apathy). Urgent items only. The key one: a follow-up date from a failed inspection with no matching Outlook appointment.
+- **Peers:** inspectors see teammates' windows, appointments and progress, never their hours.
+- **Biggest time waster today:** spreadsheets.
