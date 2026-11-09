@@ -62,6 +62,8 @@ Screenshot what you changed before publishing. Check a printed page with `page.p
 - Data: `ArtifactData list ... out_dir data/fresh` then `python3 tools/app/bundle.py` -> data/bundle.json (drops photos and Claude userIds). The owner loads it in the app: "Sign in to edit", then "Load data".
 - The Claude artifact keeps running on its own database until Cameron moves the team over; the two do not sync.
 - Renamed Prevention Services Insight (Nov 9 2026). Roster from the bureau org chart: tools/app/org_2026_11.py -> data/team-bundle.json (merge mode), 34 people under Asst. Chief Howell (command, Education, FSS/County, General Inspections East/West, Administrative Services) plus Madison Davis (S.E.R.G./F.S.C.) as test partner (team.tester: "Preview as" any inspector on My work). New roles chief, manager, liaison, admin; new divisions general, serg, admin, command (command = leadership row, not a tab). team.emailLc (first.last@fmo.hctx.net, guessed by pattern) links a signed-in person to their profile; rules allow linking only to the profile with your own address.
+- Data files for "Load data" go to Cameron's PC: `C:\Users\Cameron.Wharton\Desktop\Stat Tracking\Website Data` (device bridge, device_commit_files). Name them insight-<what>-<date>.json.
+- Org (Nov 9 2026, Cameron): Howell > Wharton > Lt. Kennedy over CO/ED (Sgt. Regalado Education, Sgt. Solis FSS/County) and Lt. Kronenberger over General Occupancies (Sgt. Lawhorn East, Sgt. Kveton West); Perez over admin; Harrell on Alternative Methods plan review (division amr). The Team page org tree is drawn from team.reportsTo.
 - Test: `SEED_DIR=fresh node firebase/tests/app-smoke.mjs` (fake Firestore, every view, desktop and phone).
 
 ## Data (artifact database collections)
