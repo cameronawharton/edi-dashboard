@@ -8,3 +8,6 @@ public/config.js
 .DS_Store
 public/index.html
 public/shim.js
+public/sw.js
+public/logos/
+public/streets/
