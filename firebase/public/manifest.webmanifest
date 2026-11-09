@@ -1,16 +1,29 @@
 {
-  "name": "Education Division Insight",
-  "short_name": "EDI",
-  "description": "HCFMO Prevention Bureau school inspection tracking",
-  "start_url": "./#overview",
+  "name": "CO/ED Division Insight",
+  "short_name": "Insight",
+  "description": "HCFMO Prevention Bureau: inspections, follow-ups and monthly statistics",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#111518",
   "theme_color": "#111518",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

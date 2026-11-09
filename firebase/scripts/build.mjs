@@ -17,7 +17,9 @@ if (!existsSync(dist + "tracker.html")) { console.error("Run python3 dashboard/b
 await build({ entryPoints: [r("src/shim/firebase.js")], bundle: true, format: "iife", minify: true, target: "es2020", outfile: r("public/shim.js"), logLevel: "warning" });
 
 const version = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 12);
-const app = readFileSync(dist + "tracker.html", "utf8");
+const claudeMsg = "This page keeps its records in a shared database that loads when it is opened in Claude by a signed-in member of the team.";
+const app = readFileSync(dist + "tracker.html", "utf8")
+  .replace(claudeMsg, "The app is published and waiting on its database. Records load once the Firebase project is connected.");
 const head = `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
