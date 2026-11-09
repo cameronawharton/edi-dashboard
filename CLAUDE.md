@@ -52,6 +52,17 @@ Refresh `data/live` before testing against real data: ArtifactData `list` each c
 Publish: Artifact publish `file_path: dist/tracker.html` with `url` set to the artifact above. Team photos (`team/*.jpg`) are already published on the artifact and are kept between publishes; don't remove them.
 Screenshot what you changed before publishing. Check a printed page with `page.pdf` when touching print styles (Command summary must stay one letter page).
 
+## The app (Nov 9 2026): GitHub Pages + Firebase
+
+- Live at https://cameronawharton.github.io/edi-dashboard/ . The repo is PUBLIC (Cameron's choice): never commit records, photos or keys.
+- `.github/workflows/pages.yml` runs on every push to main: `dashboard/build.py` -> `firebase/scripts/build.mjs` (wraps dist/tracker.html with PWA tags, the Firebase shim, logos, streets, sw.js) -> publishes `firebase/public`.
+- Firebase project `hcfmo-insight`, owned by cameronawharton@gmail.com (Spark, free). Firestore nam5. Email-link sign-in; authorized domain cameronawharton.github.io.
+- `firebase/config.public.js`: web config (public by design), `openRead: true` (anyone with the link reads; Cameron decided names and records may be open for the leadership demo), owners = Cameron.Wharton@fmo.hctx.net.
+- `firebase/firestore.rules`: open read on app collections, writes only by the owner's verified county address; county users may link their own team profile. Rules are published by pasting into the console (no CLI access from the sandbox; Firebase APIs are blocked here).
+- Data: `ArtifactData list ... out_dir data/fresh` then `python3 tools/app/bundle.py` -> data/bundle.json (drops photos and Claude userIds). The owner loads it in the app: "Sign in to edit", then "Load data".
+- The Claude artifact keeps running on its own database until Cameron moves the team over; the two do not sync.
+- Test: `SEED_DIR=fresh node firebase/tests/app-smoke.mjs` (fake Firestore, every view, desktop and phone).
+
 ## Data (artifact database collections)
 
 | collection | doc id | holds |
