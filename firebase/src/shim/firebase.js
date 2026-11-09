@@ -12,7 +12,7 @@ import {
 } from "firebase/auth";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
-  collection, doc, onSnapshot, getDoc, setDoc, deleteDoc,
+  collection, doc, onSnapshot, getDoc, setDoc, deleteDoc, writeBatch,
 } from "firebase/firestore";
 import { makePlatform, installClaudeShim } from "./platform.js";
 
@@ -55,17 +55,63 @@ if (!CFG.firebase || !CFG.firebase.apiKey) {
   }
 
   let gate = null;
+  const owner = (u) => !!u && u.emailVerified && (CFG.owners || []).map((x) => x.toLowerCase()).includes(String(u.email || "").toLowerCase());
+  let firstAuth = true;
   onAuthStateChanged(auth, (u) => {
-    if (u) {
-      if (!allowed(u.email)) { showGate("Sign in with your work email address."); signOut(auth); return; }
-      if (gate) { gate.remove(); gate = null; }
+    if (u && !allowed(u.email)) { showGate("Sign in with your work email address."); signOut(auth); return; }
+    if (u) { if (gate) { gate.remove(); gate = null; } }
+    if (CFG.openRead) {
+      // Demo mode: anyone with the link can read. Signing in only unlocks editing (firestore.rules decide).
       resolveReady(platform);
-    } else {
-      showGate();
+      if (!firstAuth) { history.replaceState(null, "", location.pathname + location.hash); location.reload(); return; } // identity changed: let the app boot again as the new person
+      firstAuth = false;
+      accountPill(u);
+      return;
     }
+    if (u) resolveReady(platform); else showGate();
   });
 
-  function showGate(msg) {
+  // Small account control for demo mode: sign in to edit, sign out, and (owner) load the data bundle.
+  function accountPill(u) {
+    const mount = () => {
+      let el = document.getElementById("edi-acct");
+      if (!el) { el = document.createElement("div"); el.id = "edi-acct"; document.body.appendChild(el); }
+      el.innerHTML = `<style>
+        #edi-acct{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:900;display:flex;gap:6px;font:500 12.5px "IBM Plex Sans",system-ui,sans-serif}
+        #edi-acct button{font:inherit;padding:7px 11px;border-radius:999px;border:1px solid var(--line,#d8dcd4);background:var(--panel,#fff);color:var(--ink,#1b2228);cursor:pointer;box-shadow:0 2px 10px rgb(0 0 0/.12)}
+        body.has-tabbar #edi-acct{bottom:calc(76px + env(safe-area-inset-bottom))}
+        @media print{#edi-acct{display:none}}
+      </style>${u ? `<button type="button" data-out title="${u.email}">Signed in · Sign out</button>${owner(u) ? '<button type="button" data-load>Load data</button>' : ""}`
+               : '<button type="button" data-in>Sign in to edit</button>'}
+      <input type="file" accept=".json,application/json" hidden>`;
+      const pick = el.querySelector("input");
+      el.querySelector("[data-in]")?.addEventListener("click", () => showGate(null, true));
+      el.querySelector("[data-out]")?.addEventListener("click", async () => { await signOut(auth); });
+      el.querySelector("[data-load]")?.addEventListener("click", () => pick.click());
+      pick.addEventListener("change", () => pick.files[0] && loadBundle(pick.files[0]));
+    };
+    if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
+  }
+
+  // Data bundle: {collections: {name: {docId: data}}}, made by tools/bundle.py from the live data. Writes in batches of 400.
+  async function loadBundle(file) {
+    let B;
+    try { B = JSON.parse(await file.text()); } catch (e) { alert("That file is not a data bundle."); return; }
+    const cols = B.collections || {};
+    const n = Object.values(cols).reduce((s, c) => s + Object.keys(c).length, 0);
+    if (!n || !confirm(`Load ${n} records into this app? Records with the same id are replaced.`)) return;
+    let done = 0, batch = writeBatch(db), inBatch = 0;
+    try {
+      for (const [c, docs] of Object.entries(cols)) for (const [id, data] of Object.entries(docs)) {
+        batch.set(doc(db, c, id), data); inBatch++; done++;
+        if (inBatch >= 400) { await batch.commit(); batch = writeBatch(db); inBatch = 0; }
+      }
+      if (inBatch) await batch.commit();
+      alert(`Loaded ${done} records.`); location.reload();
+    } catch (e) { alert(`Stopped after ${done - inBatch} records (${e.code || e.message}).`); }
+  }
+
+  function showGate(msg, closable) {
     if (!gate) {
       gate = document.createElement("div");
       gate.id = "edi-gate";
@@ -84,12 +130,13 @@ if (!CFG.firebase || !CFG.firebase.apiKey) {
         </style>
         <form class="card" novalidate>
           <img src="icons/badge.png" alt="">
-          <h1>Education Division Insight</h1>
-          <p>HCFMO Prevention Bureau. Sign in with your work email and we will send you a one-time link.</p>
+          <h1>${CFG.appName || "Division Insight"}</h1>
+          <p>HCFMO Prevention Bureau. Sign in with your work email and we will send you a one-time link. Signing in is only needed to make changes.</p>
           <input type="email" name="email" autocomplete="email" placeholder="First.Last@fmo.hctx.net" required>
           <button type="submit">Email me a sign-in link</button>
           ${CFG.microsoftTenant ? '<button type="button" class="alt" data-ms>Sign in with Microsoft</button>' : ""}
           <div class="msg" role="status"></div>
+          ${closable ? '<button type="button" class="alt" data-close>Not now</button>' : ""}
         </form>`;
       if (document.body) document.body.appendChild(gate); else document.addEventListener("DOMContentLoaded", () => document.body.appendChild(gate));
       const form = gate.querySelector("form");
@@ -104,6 +151,7 @@ if (!CFG.firebase || !CFG.firebase.apiKey) {
           out.className = "msg ok"; out.textContent = "Check your inbox for the sign-in link. Open it on this device.";
         } catch (err) { out.className = "msg"; out.textContent = "Could not send the link (" + (err.code || "error") + ")."; }
       });
+      gate.querySelector("[data-close]")?.addEventListener("click", () => { gate.remove(); gate = null; });
       const ms = gate.querySelector("[data-ms]");
       if (ms) ms.addEventListener("click", async () => {
         const p = new OAuthProvider("microsoft.com"); p.setCustomParameters({ tenant: CFG.microsoftTenant, prompt: "select_account" });
