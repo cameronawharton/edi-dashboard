@@ -1,13 +1,26 @@
 /* ------------------------------------------------------------------ people: profiles, sign-in presence, personal activity log */
 S.log=S.log||{};
 S.ui.pp={month:null};
-const ROLES={captain:{label:"Captain",short:"Capt.",about:"Bureau command. Full access to settings, profiles and every report."},
-  lieutenant:{label:"Lieutenant",short:"Lt.",about:"Oversight of County Operations and Education. Reviews the dashboard and pulls what leadership needs."},
+const ROLES={chief:{label:"Assistant Chief",short:"A/C",about:"Executive leadership over Prevention Inspection Services."},
+  captain:{label:"Captain",short:"Capt.",about:"Bureau command. Full access to settings, profiles and every report."},
+  lieutenant:{label:"Lieutenant",short:"Lt.",about:"Division command. Reviews the division's work and pulls what leadership needs."},
+  manager:{label:"Manager",short:"Mgr.",about:"Leads a civilian services team for the bureau."},
   sergeant:{label:"Sergeant",short:"Sgt.",about:"Runs the monthly Emergency Reporting imports and keeps the division's records current."},
   inspector:{label:"Inspector",short:"Insp.",about:"School inspections across assigned districts. Work goes in once, through Emergency Reporting."},
-  specialist:{label:"Fire Systems Specialist",short:"FSS",about:"Fire systems oversight for county facilities."}};
-const ROLE_ORDER=["captain","lieutenant","sergeant","inspector","specialist"];
-const DIVS={education:"Education",county:"FSS / County Operations"};
+  specialist:{label:"Fire Systems Specialist",short:"FSS",about:"Fire systems oversight for county facilities."},
+  liaison:{label:"Engineer Liaison",short:"Liaison",about:"Engineering liaison and code expert for the bureau."},
+  admin:{label:"Administrative Staff",short:"Admin",about:"Administrative support for the Prevention Bureau."}};
+const ROLE_ORDER=["chief","captain","lieutenant","manager","sergeant","inspector","specialist","liaison","admin"];
+/* Nov 9 2026: every division under Asst. Chief Howell (org chart). "command" holds the chief, captain and liaison and is shown as the leadership row, not a tab */
+const DIVS={education:"Education",county:"FSS / County Operations",general:"General Inspections",serg:"S.E.R.G.",admin:"Administrative Services"};
+const LEAD_ROLES=["chief","captain","lieutenant","manager","liaison"];
+function teamLead(){ const d=S.ui.teamDiv||"education"; return Object.entries(S.team).filter(([,x])=>x.active!==false&&!isField(x)&&(LEAD_ROLES.includes(x.role)||divOf(x)===d)).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role)-ROLE_ORDER.indexOf(b[1].role))||a[1].name.localeCompare(b[1].name)); }
+const divCount=k=>Object.values(S.team).filter(x=>x.active!==false&&divOf(x)===k&&(isField(x)||!LEAD_ROLES.includes(x.role))).length;
+/* the published app links a signed-in person to the profile whose county email matches; nobody can take someone else's profile */
+const appBuild=()=>!!window.EDI_CONFIG;
+const myEmail=()=>String((S.me&&(S.me.email||S.me.name))||"").toLowerCase();
+function autoLink(){ if(!appBuild()||S.ui._autolinked||!S.me.id||!S.canWrite||myTeamMember()||!Object.keys(S.team).length) return; S.ui._autolinked=true;
+  const hit=Object.entries(S.team).find(([,t])=>t.emailLc&&t.emailLc===myEmail()&&!t.userId); if(hit) claimProfile(hit[0]); }
 const divOf=t=>(t&&t.division)||"education";
 const HOURS_TARGET=6.5; // average hours worked per day the bureau expects at minimum
 /* supervisors exempt from the hours target (Nov 4 2026): team.hoursExempt. Their hours still show, without a target */
@@ -29,11 +42,12 @@ function meChipHTML(){ if(S.offline||!S.ready) return ""; const m=myTeamMember()
   return `<span class="av empty" style="--s:30px" aria-hidden="true">?</span><span class="mc-t"><b>Choose your profile</b><small>${S.me.name?`Signed in as ${esc(S.me.name)}`:"Signed in"}</small></span>`; }
 function openClaim(){ const mine=myTeamMember(); const list=Object.entries(S.team).filter(([,t])=>t.active!==false).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role||"inspector")-ROLE_ORDER.indexOf(b[1].role||"inspector"))||a[1].name.localeCompare(b[1].name));
   openModal(`<div class="mh"><h2>Who is signed in?</h2><button class="btn sm ghost" data-close="1" type="button" aria-label="Close">✕</button></div><div class="mb">
-    <p class="muted" style="margin:0">You are signed in to Claude as <b>${esc(S.me.name||"this account")}</b>. Pick your profile once and this account stays linked to it: your name shows at the top of every page and the inspections and activity you log are credited to you.</p>
+    <p class="muted" style="margin:0">${appBuild()?`You are signed in as <b>${esc(myEmail()||"this account")}</b>. Your profile links on its own when this address matches the county email on file.`:`You are signed in to Claude as <b>${esc(S.me.name||"this account")}</b>. Pick your profile once and this account stays linked to it: your name shows at the top of every page and the inspections and activity you log are credited to you.`}</p>
     <div class="claimgrid">${list.map(([id,t])=>{ const taken=t.userId&&t.userId!==S.me.id; const me=t.userId===S.me.id;
       return `<button class="claimcard ${me?"on":""}" type="button" ${taken||mine?"disabled":`data-act="claim" data-team="${esc(id)}"`}>${avatar(id,64)}<b>${esc(memberName(id))}</b><small>${esc(roleOf(t).label)}</small><span class="faint" style="font-size:11.5px">${me?"You":taken?"Already linked":"Select"}</span></button>`; }).join("")}</div>
     ${mine?`<p class="faint" style="margin:0;font-size:12.5px">This account is linked to ${esc(memberName(mine.id))}. To switch, open your profile and choose “Not me”.</p>`:`<p class="faint" style="margin:0;font-size:12.5px">Not listed? Ask the captain to add you on the Team page.</p>`}</div>`,true); }
 async function claimProfile(id){ if(myTeamMember()) return; const t=S.team[id]; if(!t||(t.userId&&t.userId!==S.me.id)) return;
+  if(appBuild()&&(t.emailLc||"")!==myEmail()){ flash(`That profile belongs to ${memberName(id)}. Profiles link to the county email on file; ask Capt. Wharton if yours is wrong.`); return; }
   if(await write(()=>S.db.doc("team/"+id).update({userId:S.me.id,accountName:S.me.name||"",linkedAt:new Date().toISOString()}),`Signed in as ${memberName(id)}`)){ closeModal(); location.hash="me"; } }
 
 /* personal log */

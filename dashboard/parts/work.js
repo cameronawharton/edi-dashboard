@@ -7,7 +7,7 @@ const wkDate=(iso,dow)=>{ if(!iso) return ""; const t=new Date(iso.slice(0,10)+"
 const navField=()=>{ const m=myTeamMember(); return m&&divOf(m)==="county"?["work","county","team"]:["work","calendar","map","districts","team"]; };
 function navViews(){ return fieldUser()?navField().map(k=>VIEWS.find(v=>v[0]===k)).filter(Boolean):VIEWS; }
 /* first page after sign-in: field members land on My work */
-function landWork(){ if(S.ui._landed||!S.me.id||!Object.keys(S.team).length) return; S.ui._landed=true; if(!location.hash&&fieldUser()){ S.ui.view="work"; S.ui.param=null; } }
+function landWork(){ autoLink(); if(S.ui._landed||!S.me.id||!Object.keys(S.team).length) return; S.ui._landed=true; if(!location.hash&&fieldUser()){ S.ui.view="work"; S.ui.param=null; } }
 
 /* the district contact to schedule through: point of contact or facilities/safety lead before the superintendent */
 function leadContact(o){ const cs=(o&&o.contacts||[]).filter(c=>c&&(c.phone||c.email)); if(!cs.length) return null;
@@ -40,7 +40,7 @@ const icsEsc=s=>String(s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(
 /* one Outlook appointment, titled the way the team names them: type and campus */
 function followUpICS(r){ const d=r.nx.d.replace(/-/g,""), d2=isoAdd(r.nx.d,1).replace(/-/g,""), stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
   const fails=(r.fl||[]).filter(x=>!/^Printed on |^Inspection Topics:?$/i.test(x.q||"")).length;
-  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//HCFMO//CO-ED Division Insight//EN","METHOD:PUBLISH","BEGIN:VEVENT",`UID:${erNorm(r.k)}@coed-insight`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${d2}`,
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//HCFMO//Prevention Services Insight//EN","METHOD:PUBLISH","BEGIN:VEVENT",`UID:${erNorm(r.k)}@coed-insight`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${d2}`,
     `SUMMARY:${icsEsc(`${r.nx.t||"Follow-up"} ${r.occ}`)}`,`LOCATION:${icsEsc([r.addr,r.city].filter(Boolean).join(", "))}`,
     `DESCRIPTION:${icsEsc(`Occupancy ${r.id}. ${r.rt||"Failed"} on ${wkDate(r.date)} ${r.date.slice(0,4)}${fails?`, ${fails} item${fails>1?"s":""} to recheck`:""}. Set the time when you confirm with the site.`)}`,
     "TRANSP:TRANSPARENT","END:VEVENT","END:VCALENDAR"].join("\r\n")+"\r\n"; }
@@ -55,16 +55,17 @@ function fixItems(id){ const div=memDiv(id), out={flags:[],noTime:[],noDate:[]};
 
 function workMonths(id){ return [...new Set(Object.values(S.er).filter(d=>d.inspector===id).map(d=>d.month).concat(Object.values(S.actions).filter(d=>d.member===id).map(d=>d.month)))].sort().reverse(); }
 function workWho(){ const w=S.ui.work, me=myTeamMember();
-  if(me&&fieldUser()) return me.id;
+  if(me&&fieldUser()&&!(me.tester&&w.who&&S.team[w.who])) return me.id; /* a test partner (team.tester) may preview any inspector */
   if(w.who&&S.team[w.who]) return w.who;
   if(me&&isField(me)&&workMonths(me.id).length) return me.id;
-  const div=me?divOf(me):"education"; const f=Object.entries(S.team).filter(([,t])=>isField(t)&&!t.hoursExempt&&divOf(t)===div).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  let div=me?divOf(me):"education"; if(!Object.values(S.team).some(t=>isField(t)&&divOf(t)===div)) div="education";
+  const f=Object.entries(S.team).filter(([,t])=>isField(t)&&!t.hoursExempt&&divOf(t)===div).sort((a,b)=>a[1].name.localeCompare(b[1].name));
   return f.length?f[0][0]:null; }
 
 function vWork(M){ const id=workWho(); const w=S.ui.work; const me=myTeamMember();
   if(!id) return `<div class="skeleton"><h2>My work</h2><p>Choose your profile first so this page can show your schools and follow-ups.</p><button class="btn primary" data-act="claim-open" type="button">Choose your profile</button></div>`;
   const t=S.team[id], self=me&&me.id===id, county=divOf(t)==="county";
-  const picker=!fieldUser()?`<select id="wk-who" aria-label="Whose work">${Object.entries(DIVS).map(([dk,dl])=>`<optgroup label="${esc(dl)}">${Object.entries(S.team).filter(([,x])=>isField(x)&&divOf(x)===dk).sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k])=>`<option value="${esc(k)}" ${k===id?"selected":""}>${esc(memberName(k))}</option>`).join("")}</optgroup>`).join("")}</select>`:"";
+  const picker=(!fieldUser()||(me&&me.tester))?`${me&&me.tester&&fieldUser()?'<span class="faint" style="font-size:12.5px">Preview as</span>':""}<select id="wk-who" aria-label="Whose work">${Object.entries(DIVS).map(([dk,dl])=>`<optgroup label="${esc(dl)}">${Object.entries(S.team).filter(([,x])=>isField(x)&&divOf(x)===dk).sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([k])=>`<option value="${esc(k)}" ${k===id?"selected":""}>${esc(memberName(k))}</option>`).join("")}</optgroup>`).join("")}</select>`:"";
   const lastER=Object.values(S.er).filter(d=>d.inspector===id).flatMap(d=>d.rows.map(r=>r.date)).sort().pop();
   const head=`<section class="wkhead">${avatar(id,46)}<div><span class="eyebrow">${wkDate(todayISO(),true)} · ${esc(roleOf(t).label)}${t.unit?` · Unit ${esc(t.unit)}`:""}</span><h2>${esc(memberName(id))}</h2>
     <span class="faint" style="font-size:12.5px">${lastER?`Emergency Reporting loaded through ${wkDate(lastER)}. Work done since then shows after the next upload.`:"No Emergency Reporting export loaded yet."}</span></div><span class="sp"></span>${picker}</section>`;
@@ -74,7 +75,8 @@ function vWork(M){ const id=workWho(); const w=S.ui.work; const me=myTeamMember(
 
 /* 1 · coming up: the open district window, campuses left, weekly pace, who to call */
 function wkComing(M,id){ const W=S.windows[M.Y]; const lane=(W&&W.lanes[id])||[]; const today=todayISO();
-  if(!lane.length){ const left=M.facs.filter(f=>f.org&&f.org.assignedTo===id&&f.state!=="excluded"&&!f.visited).length;
+  if(!lane.length){ const mine=M.facs.filter(f=>f.org&&f.org.assignedTo===id&&f.state!=="excluded"); const left=mine.filter(f=>!f.visited).length;
+    if(!mine.length) return `<section class="panel"><div class="ph"><h3>Coming up</h3></div><div class="pb"><p style="margin:0">No schools are assigned to ${esc(memberName(id,"first"))} yet. Assignments are made on the Team page; ${esc(DIVS[divOf(S.team[id])]||"this division")} work shows here once its Emergency Reporting exports are loaded.</p></div></section>`;
     return `<section class="panel"><div class="ph"><h3>Coming up</h3></div><div class="pb">${left?`<p style="margin:0">${left} assigned campuses still due this season. No calendar window yet: a sergeant drafts it on the <a href="#calendar">Inspection calendar</a>.</p>`:`<p style="margin:0">Every assigned campus is inspected this season.</p>`}</div></section>`; }
   const wk=calWeeks(W).find(x=>x.mon<=today&&today<=isoAdd(x.mon,6)); const brk=wk&&wk.br;
   const cur=lane.find(b=>today>=b.start&&today<=b.end), next=lane.filter(b=>b.start>today).sort((a,b)=>a.start.localeCompare(b.start))[0];

@@ -1,4 +1,4 @@
-# CO/ED Division Insight (formerly Education Division Insight, EDI)
+# Prevention Services Insight (formerly CO/ED Division Insight, Education Division Insight / EDI)
 
 School inspection and monthly prevention statistics dashboard for the Harris County Fire Marshal's Office (HCFMO), Prevention Bureau, County Operations and Education (CO/ED) Division. Renamed Nov 4 2026; build.py swaps the name in base.html. Owner: Capt. Cameron Wharton.
 
@@ -61,6 +61,7 @@ Screenshot what you changed before publishing. Check a printed page with `page.p
 - `firebase/firestore.rules`: open read on app collections, writes only by the owner's verified county address; county users may link their own team profile. Rules are published by pasting into the console (no CLI access from the sandbox; Firebase APIs are blocked here).
 - Data: `ArtifactData list ... out_dir data/fresh` then `python3 tools/app/bundle.py` -> data/bundle.json (drops photos and Claude userIds). The owner loads it in the app: "Sign in to edit", then "Load data".
 - The Claude artifact keeps running on its own database until Cameron moves the team over; the two do not sync.
+- Renamed Prevention Services Insight (Nov 9 2026). Roster from the bureau org chart: tools/app/org_2026_11.py -> data/team-bundle.json (merge mode), 34 people under Asst. Chief Howell (command, Education, FSS/County, General Inspections East/West, Administrative Services) plus Madison Davis (S.E.R.G./F.S.C.) as test partner (team.tester: "Preview as" any inspector on My work). New roles chief, manager, liaison, admin; new divisions general, serg, admin, command (command = leadership row, not a tab). team.emailLc (first.last@fmo.hctx.net, guessed by pattern) links a signed-in person to their profile; rules allow linking only to the profile with your own address.
 - Test: `SEED_DIR=fresh node firebase/tests/app-smoke.mjs` (fake Firestore, every view, desktop and phone).
 
 ## Data (artifact database collections)

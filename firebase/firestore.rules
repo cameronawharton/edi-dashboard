@@ -1,11 +1,11 @@
 rules_version = '2';
-// CO/ED Division Insight, demo phase (Nov 2026).
+// Prevention Services Insight, demo phase (Nov 2026).
 //
 // Read:  anyone with the link can read the app's records (Cameron's decision for the leadership demo).
 //        When county IT takes over, change `openRead()` to `workEmail()` and nothing else moves.
 // Write: the owner (signed in with a verified @fmo.hctx.net address listed below) can change everything,
-//        including loading the data bundle. Anyone signed in with a county address may link themselves to
-//        their own team profile ("This is me"), and nothing else.
+//        including loading the data bundle. A county user may link themselves only to the team profile
+//        whose email on file (emailLc) is their own signed-in address, and nothing else.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -24,12 +24,13 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
-    // "This is me": a county user links their own profile once.
+    // Profile linking: a county user can link (or unlink) ONLY the profile whose emailLc is their own signed-in address.
     match /team/{id} {
       allow update: if workEmail()
+        && resource.data.get('emailLc', '') == request.auth.token.email.lower()
         && changed().hasOnly(['userId', 'accountName', 'linkedAt', 'updatedAt'])
         && resource.data.get('userId', null) in [null, request.auth.uid]
-        && request.resource.data.userId == request.auth.uid;
+        && request.resource.data.get('userId', null) in [null, request.auth.uid];
     }
 
     // per-person private data (pinned districts and schools)

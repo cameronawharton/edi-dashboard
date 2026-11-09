@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------ supervisor attention panel, flag review, command summary for stakeholders */
 S.flags=S.flags||{};
-const SUP_ROLES=["captain","lieutenant","sergeant"];
+const SUP_ROLES=["chief","captain","lieutenant","manager","sergeant"];
 const isSupervisor=()=>{ const m=myTeamMember(); return !!(m&&SUP_ROLES.includes(m.role)); };
 /* a signed-in inspector or specialist: trimmed nav, lands on My work, sees only their own hours. Cosmetic until the app move gives real sign-in */
-const fieldUser=()=>{ const m=myTeamMember(); return !!m&&!SUP_ROLES.includes(m.role); };
+const fieldUser=()=>{ const m=myTeamMember(); return !!m&&isField(m)&&!SUP_ROLES.includes(m.role); };
 const seesHoursOf=id=>{ const m=myTeamMember(); return !m||!fieldUser()||m.id===id; };
 const FLAGGED=["longer","shorter","place","noday"];
 /* a stable id for an assist entry, so an explanation survives a reupload of the same entry */

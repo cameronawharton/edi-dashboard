@@ -103,7 +103,7 @@ if (!CFG.firebase || !CFG.firebase.apiKey) {
     let done = 0, batch = writeBatch(db), inBatch = 0;
     try {
       for (const [c, docs] of Object.entries(cols)) for (const [id, data] of Object.entries(docs)) {
-        batch.set(doc(db, c, id), data); inBatch++; done++;
+        batch.set(doc(db, c, id), data, B.merge ? { merge: true } : {}); inBatch++; done++;
         if (inBatch >= 400) { await batch.commit(); batch = writeBatch(db); inBatch = 0; }
       }
       if (inBatch) await batch.commit();

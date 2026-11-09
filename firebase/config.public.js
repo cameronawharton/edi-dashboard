@@ -2,7 +2,7 @@
 // Security comes from firestore.rules. Fill the firebase block from
 // Firebase console > Project settings > General > Your apps > Web app.
 window.EDI_CONFIG = {
-  appName: "CO/ED Division Insight",
+  appName: "Prevention Services Insight",
   firebase: {
     apiKey: "AIzaSyBMDAodjXWvQwpii2akZrbHcPfFhmqAIh0",
     authDomain: "hcfmo-insight.firebaseapp.com",
