@@ -12,10 +12,25 @@ const ROLES={chief:{label:"Assistant Chief",short:"A/C",about:"Executive leaders
   admin:{label:"Administrative Staff",short:"Admin",about:"Administrative support for the Prevention Bureau."}};
 const ROLE_ORDER=["chief","captain","lieutenant","manager","sergeant","inspector","specialist","liaison","admin"];
 /* Nov 9 2026: every division under Asst. Chief Howell (org chart). "command" holds the chief, captain and liaison and is shown as the leadership row, not a tab */
-const DIVS={education:"Education",county:"FSS / County Operations",general:"General Inspections",serg:"S.E.R.G.",admin:"Administrative Services"};
-const LEAD_ROLES=["chief","captain","lieutenant","manager","liaison"];
-function teamLead(){ const d=S.ui.teamDiv||"education"; return Object.entries(S.team).filter(([,x])=>x.active!==false&&!isField(x)&&(LEAD_ROLES.includes(x.role)||divOf(x)===d)).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role)-ROLE_ORDER.indexOf(b[1].role))||a[1].name.localeCompare(b[1].name)); }
-const divCount=k=>Object.values(S.team).filter(x=>x.active!==false&&divOf(x)===k&&(isField(x)||!LEAD_ROLES.includes(x.role))).length;
+/* Nov 9 2026 (Cameron): Asst. Chief Howell > Capt. Wharton > Lt. Kennedy over CO/ED (Sgt. Regalado: Education, Sgt. Solis: FSS / County)
+   and Lt. Kronenberger over General Occupancies (Sgt. Lawhorn: East, Sgt. Kveton: West); Harrell is on the Alternative Methods plan review team.
+   Division keys drive the stats logic (education, county, general); the org tree on the Team page comes from team.reportsTo. */
+const DIVS={education:"CO/ED · Education",county:"CO/ED · FSS / County",general:"General Occupancies",admin:"Administrative Services",amr:"Alternative Methods",serg:"S.E.R.G."};
+const LEAD_ROLES=["chief","captain","lieutenant"];
+/* people on the selected tab who are not in the productivity cards (managers, admin staff, liaison) */
+function teamLead(){ const d=S.ui.teamDiv||"education"; return Object.entries(S.team).filter(([,x])=>x.active!==false&&!isField(x)&&!LEAD_ROLES.includes(x.role)&&divOf(x)===d).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role)-ROLE_ORDER.indexOf(b[1].role))||a[1].name.localeCompare(b[1].name)); }
+const divCount=k=>Object.values(S.team).filter(x=>x.active!==false&&divOf(x)===k&&!LEAD_ROLES.includes(x.role)).length;
+/* chain of command, drawn from reportsTo. Leaves (people nobody reports to) sit as chips under their supervisor */
+function orgTree(){ const act=Object.entries(S.team).filter(([,t])=>t.active!==false); if(!act.some(([,t])=>t.reportsTo)) return "";
+  const kids={}; act.forEach(([id,t])=>{ const p=t.reportsTo&&S.team[t.reportsTo]?t.reportsTo:"_root"; (kids[p]=kids[p]||[]).push(id); });
+  const rank=id=>ROLE_ORDER.indexOf(S.team[id].role||"inspector"), ord=(a,b)=>rank(a)-rank(b)||memberName(a).localeCompare(memberName(b));
+  const label=id=>{ const t=S.team[id]; return `<span class="ot-who" data-person="${esc(id)}" role="link" tabindex="0">${avatar(id,28)}<span><b>${esc(memberName(id))}</b><small>${esc(roleOf(t).label)}${t.section?" · "+esc(t.section):""}</small></span></span>`; };
+  const node=id=>{ const ch=(kids[id]||[]).sort(ord), team=["sergeant","manager"].includes(S.team[id].role), leaves=team?ch.filter(c=>!kids[c]):[], subs=team?ch.filter(c=>kids[c]):ch;
+    if(!kids[id]&&!team) return `<li>${label(id)}</li>`;
+    return `<li>${label(id)}${leaves.length?`<div class="ot-leaves">${leaves.map(c=>`<span class="ot-chip" data-person="${esc(c)}" role="link" tabindex="0">${avatar(c,22)}${esc(memberName(c))}</span>`).join("")}</div>`:""}${subs.length?`<ul>${subs.map(node).join("")}</ul>`:""}</li>`; };
+  const roots=(kids._root||[]).sort(ord), tops=roots.filter(r=>kids[r]), loose=roots.filter(r=>!kids[r]);
+  return `<section class="panel"><div class="ph"><h3>Organization</h3><span class="faint">Prevention Inspection Services</span></div><div class="pb"><ul class="orgtree">${tops.map(node).join("")}</ul>
+    ${loose.length?`<div class="ot-loose"><span class="eyebrow">Outside this chain</span>${loose.map(c=>`<span class="ot-chip" data-person="${esc(c)}" role="link" tabindex="0">${avatar(c,22)}${esc(memberName(c))}${S.team[c].tester?" · test partner":""}</span>`).join("")}</div>`:""}</div></section>`; }
 /* the published app links a signed-in person to the profile whose county email matches; nobody can take someone else's profile */
 const appBuild=()=>!!window.EDI_CONFIG;
 const myEmail=()=>String((S.me&&(S.me.email||S.me.name))||"").toLowerCase();

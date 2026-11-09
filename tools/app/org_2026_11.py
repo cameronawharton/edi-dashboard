@@ -26,21 +26,21 @@ def add(name, role, division, field, section=None, reportsTo=None, unit=None, ho
 # command
 add('Micheal Howell', 'chief', 'command', False, 'Prevention Inspection Services')
 add('Cameron Wharton', 'captain', 'education', False, 'Prevention Inspection Services', 'micheal-howell')
-add('Jacqueline Harrell', 'liaison', 'command', False, 'Engineer Liaison, Code Expert', 'cameron-wharton')
-# County / Education Services
-add('Durrell Kennedy', 'lieutenant', 'education', False, 'County / Education Services', 'cameron-wharton', hoursExempt=True)
+add('Jacqueline Harrell', 'liaison', 'amr', False, 'Alternative Methods Plan Review', 'cameron-wharton')
+# CO/ED (Lt. Kennedy)
+add('Durrell Kennedy', 'lieutenant', 'education', False, 'CO/ED', 'cameron-wharton', hoursExempt=True)
 add('Isela Regalado', 'sergeant', 'education', True, 'Education', 'durrell-kennedy', hoursExempt=True)
 for n, u in [('Donald Hewett', '95P40'), ('Deanna Burciaga', '95P50'), ('Matthew Martinez', '95P24'), ('Mason Montagna', '95P44')]:
     add(n, 'inspector', 'education', True, 'Education', 'isela-regalado', unit=u, preferred='Matt' if n.startswith('Matthew') else None)
 add('Juan Solis', 'sergeant', 'county', True, 'FSS / County', 'durrell-kennedy', hoursExempt=True)
 for n in ['Priscilla Gonzales', 'Victor King']: add(n, 'inspector', 'county', True, 'County', 'juan-solis')
 for n in ['Jimmie Gabriel', 'Kaley Bowdoin', 'Dillon Eldridge', 'Bryan Darjean']: add(n, 'specialist', 'county', True, 'F.S.S.', 'juan-solis')
-# General Inspections
-add('Jeffrey Kronenberger', 'lieutenant', 'general', False, 'General Inspections', 'cameron-wharton', hoursExempt=True)
-add('Jacob Lawhorn', 'sergeant', 'general', True, 'General Inspections (East)', 'jeffrey-kronenberger', hoursExempt=True)
-for n in ['Joseph Heeger', 'Robert High', 'Tyler Huber', 'Diana Regalado', 'Damian Phillip']: add(n, 'inspector', 'general', True, 'General Inspections (East)', 'jacob-lawhorn')
-add('Clinton Kveton', 'sergeant', 'general', True, 'General Inspections (West)', 'jeffrey-kronenberger', hoursExempt=True)
-for n in ['Cody Mangum', 'Kenneth Smith', 'Robert Morgan', 'Alexis Sauceda', 'Shelton Easley']: add(n, 'inspector', 'general', True, 'General Inspections (West)', 'clinton-kveton')
+# General Occupancies (Lt. Kronenberger)
+add('Jeffrey Kronenberger', 'lieutenant', 'general', False, 'General Occupancies', 'cameron-wharton', hoursExempt=True)
+add('Jacob Lawhorn', 'sergeant', 'general', True, 'General Occupancies (East)', 'jeffrey-kronenberger', hoursExempt=True)
+for n in ['Joseph Heeger', 'Robert High', 'Tyler Huber', 'Diana Regalado', 'Damian Phillip']: add(n, 'inspector', 'general', True, 'General Occupancies (East)', 'jacob-lawhorn')
+add('Clinton Kveton', 'sergeant', 'general', True, 'General Occupancies (West)', 'jeffrey-kronenberger', hoursExempt=True)
+for n in ['Cody Mangum', 'Kenneth Smith', 'Robert Morgan', 'Alexis Sauceda', 'Shelton Easley']: add(n, 'inspector', 'general', True, 'General Occupancies (West)', 'clinton-kveton')
 # Administrative Services
 add('Kimberly Perez', 'manager', 'admin', False, 'Prevention Administrative Services', 'cameron-wharton')
 for n in ['Ivett Ramos', 'Jessica Cerros', 'Cayley Montes']: add(n, 'admin', 'admin', False, 'Administrative Services', 'kimberly-perez')
