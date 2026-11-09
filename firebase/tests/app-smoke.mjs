@@ -9,7 +9,7 @@ import { extname } from "node:path";
 import { chromium } from "playwright";
 
 const root = new URL("..", import.meta.url).pathname;
-const live = root + "../data/live/";
+const live = root + "../data/" + (process.env.SEED_DIR || "live") + "/";
 const fake = (await build({ entryPoints: [root + "tests/fake-shim-entry.js"], bundle: true, format: "iife", write: false })).outputFiles[0].text;
 const seed = {};
 for (const col of readdirSync(live)) {

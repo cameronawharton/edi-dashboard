@@ -4,12 +4,12 @@
 window.EDI_CONFIG = {
   appName: "CO/ED Division Insight",
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: "",
+    apiKey: "AIzaSyBMDAodjXWvQwpii2akZrbHcPfFhmqAIh0",
+    authDomain: "hcfmo-insight.firebaseapp.com",
+    projectId: "hcfmo-insight",
+    storageBucket: "hcfmo-insight.firebasestorage.app",
+    messagingSenderId: "1095240954181",
+    appId: "1:1095240954181:web:c0ca8a625d5033892c0e2c",
   },
   openRead: true,                                  // demo: anyone with the link can read; signing in only unlocks edits
   owners: ["Cameron.Wharton@fmo.hctx.net"],       // may load the data bundle and edit everything

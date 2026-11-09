@@ -55,7 +55,7 @@ export function makePlatform(F, opts) {
   const user = {
     async me() { const u = opts.currentUser(); return { id: u ? u.uid : null, name: u ? (u.displayName || u.email || "") : "", email: u ? u.email : null }; },
     async id() { const u = opts.currentUser(); return u ? u.uid : null; },
-    async can() { return true; }, // Firestore security rules are the real gate; the app shows a toast when a write is refused.
+    async can() { return !!opts.currentUser(); }, // signed out = read only; Firestore security rules are the real gate.
     async isOwner() { return false; },
     async canEdit() { return true; },
   };
