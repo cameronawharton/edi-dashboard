@@ -33,6 +33,16 @@ service cloud.firestore {
         && request.resource.data.get('userId', null) in [null, request.auth.uid];
     }
 
+    // Feedback page: any county user sends; only the owner reads everything; authors can read their own.
+    match /feedback/{id} {
+      allow create: if workEmail() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['type', 'page', 'text', 'uid', 'email', 'name', 'member', 'at', 'status'])
+        && request.resource.data.text is string && request.resource.data.text.size() <= 3000
+        && request.resource.data.status == 'new';
+      allow read: if isOwner() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isOwner();
+    }
+
     // per-person private data (pinned districts and schools)
     match /data/users/{uid}/{rest=**} {
       allow read, write: if signedIn() && request.auth.uid == uid;

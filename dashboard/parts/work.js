@@ -4,7 +4,8 @@
 S.ui.work=S.ui.work||{who:null,month:null,all:false};
 const WK_DAY=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const wkDate=(iso,dow)=>{ if(!iso) return ""; const t=new Date(iso.slice(0,10)+"T12:00:00Z"); return `${dow?WK_DAY[t.getUTCDay()]+" ":""}${MON3[t.getUTCMonth()]} ${t.getUTCDate()}`; };
-const navField=()=>{ const m=myTeamMember(); return m&&divOf(m)==="county"?["work","county","team"]:["work","calendar","map","districts","team"]; };
+const navField=()=>{ const m=myTeamMember(); const d=m?divOf(m):"education";
+  return d==="county"?["work","overview","county","team","feedback"]:d==="general"?["work","overview","team","feedback"]:["work","overview","calendar","map","districts","team","feedback"]; };
 function navViews(){ return fieldUser()?navField().map(k=>VIEWS.find(v=>v[0]===k)).filter(Boolean):VIEWS; }
 /* first page after sign-in: field members land on My work */
 function landWork(){ autoLink(); if(S.ui._landed||!S.me.id||!Object.keys(S.team).length) return; S.ui._landed=true; if(!location.hash&&fieldUser()){ S.ui.view="work"; S.ui.param=null; } }
@@ -70,8 +71,9 @@ function vWork(M){ const id=workWho(); const w=S.ui.work; const me=myTeamMember(
   const head=`<section class="wkhead">${avatar(id,46)}<div><span class="eyebrow">${wkDate(todayISO(),true)} · ${esc(roleOf(t).label)}${t.unit?` · Unit ${esc(t.unit)}`:""}</span><h2>${esc(memberName(id))}</h2>
     <span class="faint" style="font-size:12.5px">${lastER?`Emergency Reporting loaded through ${wkDate(lastER)}. Work done since then shows after the next upload.`:"No Emergency Reporting export loaded yet."}</span></div><span class="sp"></span>${picker}</section>`;
   const fx=fixItems(id), fu=followUps(id);
-  return `${head}<div class="wkcols"><div class="wkmain">${county?wkCounty(M,id):wkComing(M,id)}${wkFollow(id,fu)}${wkFix(id,fx)}</div>
-    <div class="wkside">${wkNumbers(M,id)}${county?wkTeamCounty(id):wkTeam(M,id)}</div></div>`; }
+  const general=divOf(t)==="general";
+  return `${head}<div class="wkcols"><div class="wkmain">${general?"":county?wkCounty(M,id):wkComing(M,id)}${wkFollow(id,fu)}${wkFix(id,fx)}${wkSeason(id)}</div>
+    <div class="wkside">${todayPanel(groupOf(t),id)}${wkNumbers(M,id)}${general?"":county?wkTeamCounty(id):wkTeam(M,id)}</div></div>`; }
 
 /* 1 · coming up: the open district window, campuses left, weekly pace, who to call */
 function wkComing(M,id){ const W=S.windows[M.Y]; const lane=(W&&W.lanes[id])||[]; const today=todayISO();

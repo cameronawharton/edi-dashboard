@@ -6,7 +6,7 @@ import os,shutil
 HERE=os.path.dirname(os.path.abspath(__file__)); DIST=os.path.join(os.path.dirname(HERE),'dist')
 s=open(os.path.join(HERE,'base.html')).read()
 P=os.path.join(HERE,'parts')+'/'
-css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read()+open(P+'county.css').read()+open(P+'calendar.css').read()+open(P+'work.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()+'\n'+open(P+'county.js').read()+'\n'+open(P+'calendar.js').read()+'\n'+open(P+'work.js').read()
+css=open(P+'stats.css').read()+open(P+'people.css').read()+open(P+'detail.css').read()+open(P+'command.css').read()+open(P+'county.css').read()+open(P+'calendar.css').read()+open(P+'work.css').read()+open(P+'groups.css').read(); js=open(P+'stats.js').read()+'\n'+open(P+'detail.js').read()+'\n'+open(P+'people.js').read()+'\n'+open(P+'actions.js').read()+'\n'+open(P+'command.js').read()+'\n'+open(P+'county.js').read()+'\n'+open(P+'calendar.js').read()+'\n'+open(P+'work.js').read()+'\n'+open(P+'groups.js').read()
 def rep(a,b):
     global s
     assert s.count(a)==1,(a[:80],s.count(a)); s=s.replace(a,b)
@@ -14,9 +14,9 @@ rep('@media (prefers-reduced-motion:reduce){*{transition:none!important;animatio
 rep('\nboot();\n</script>','\n'+js+'\nboot();\n</script>')
 rep('["insights","Insights"],','["insights","Insights"],["stats","Monthly stats"],["brief","Command summary"],')
 rep('["map","Map"],','["map","Map"],["calendar","Inspection calendar"],["county","County facilities"],')
-rep('insights:vInsights,','insights:vInsights,work:vWork,stats:vStats,brief:vBrief,county:vCounty,calendar:vCalendar,person:vPerson,')
+rep('insights:vInsights,','insights:vInsights,work:vWork,feedback:vFeedback,stats:vStats,brief:vBrief,county:vCounty,calendar:vCalendar,person:vPerson,')
 rep('el.innerHTML=fn(M);','el.innerHTML=S.ui.view==="person"?vPerson(M,S.ui.param):fn(M);')
-rep('sub("inbox","inbox");','sub("inbox","inbox"); sub("er","er"); sub("stats","stats"); sub("log","log"); sub("actions","actions"); sub("flags","flags"); sub("cfac","cfac"); sub("windows","windows");')
+rep('sub("inbox","inbox");','sub("inbox","inbox"); sub("er","er"); sub("stats","stats"); sub("log","log"); sub("actions","actions"); sub("flags","flags"); sub("cfac","cfac"); sub("windows","windows"); if(appOwner()) sub("feedback","feedback");')
 rep('const fn={overview','if((S.ui.view==="stats"||S.ui.view==="brief"||S.ui.view==="calendar"||S.ui.view==="work")&&!S.loaded.ledgers){ el.innerHTML=`<div class="skeleton">Loading…</div>`; return; }\n  const fn={overview')
 rep("""<span class="faint">No inspections on record.</span><span></span></div>`}</div>""","""<span class="faint">No inspections on record.</span><span></span></div>`}</div>${erActivityHTML(fid)}""")
 # routing
@@ -78,6 +78,9 @@ import json as _json
 for _a,_b in _json.load(open(os.path.join(HERE,'derotate.json'))): rep(_a,_b)
 # My work (Nov 4 2026): inspector landing page, trimmed nav for inspectors and specialists, manual logging left to supervisors
 rep('const VIEWS=[["overview","Overview"],','const VIEWS=[["overview","Overview"],["work","My work"],')
+rep('const fn={overview:vOverview,','const fn={overview:vOverviewGroup,')
+rep('["team","Team"],["data","Data & plugins"]];','["team","Team"],["data","Data & plugins"],["feedback","Feedback"]];')
+rep('if(d.id==="audit") S.audit=d.data(); });','if(d.id==="audit") S.audit=d.data(); if(d.id.indexOf("schedule-")===0) S.sched[d.id.slice(9)]=d.data(); });')
 rep('$("#nav").innerHTML=VIEWS.map(','$("#nav").innerHTML=navViews().map(')
 rep('function render(){\n  const M = S.loaded.orgs','function render(){\n  landWork();\n  const M = S.loaded.orgs')
 assert s.count('${S.canWrite&&f.state!=="excluded"?`<button class="btn sm" data-act="log"')==2
