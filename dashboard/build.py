@@ -76,13 +76,12 @@ rep('    ${isISD?`<td>${rotBadge(f.rotation,M.L)}</td>`:""}<td>${f.state==="excl
 # Rotation fully removed (Nov 4 2026): exact base.html fragments and their replacements, applied in order.
 import json as _json
 for _a,_b in _json.load(open(os.path.join(HERE,'derotate.json'))): rep(_a,_b)
-# My work (Nov 4 2026): inspector landing page, trimmed nav for inspectors and specialists, manual logging left to supervisors
-rep('const VIEWS=[["overview","Overview"],','const VIEWS=[["overview","Overview"],["work","My work"],')
+# Inspectors page (Nov 10 2026, was My work): a supervisor's page for one person; the app is for leaders only
+rep('const VIEWS=[["overview","Overview"],','const VIEWS=[["overview","Overview"],["work","Inspectors"],')
 rep('const fn={overview:vOverview,','const fn={overview:vOverviewGroup,')
 rep('["team","Team"],["data","Data & plugins"]];','["team","Team"],["data","Data & plugins"],["feedback","Feedback"]];')
 rep('if(d.id==="audit") S.audit=d.data(); });','if(d.id==="audit") S.audit=d.data(); if(d.id.indexOf("schedule-")===0) S.sched[d.id.slice(9)]=d.data(); });')
-rep('$("#nav").innerHTML=VIEWS.map(','$("#nav").innerHTML=navViews().map(')
-rep('function render(){\n  const M = S.loaded.orgs','function render(){\n  landWork();\n  const M = S.loaded.orgs')
+rep('function render(){\n  const M = S.loaded.orgs','function render(){\n  landRole();\n  const M = S.loaded.orgs')
 assert s.count('${S.canWrite&&f.state!=="excluded"?`<button class="btn sm" data-act="log"')==2
 s=s.replace('${S.canWrite&&f.state!=="excluded"?`<button class="btn sm" data-act="log"','${S.canWrite&&isSupervisor()&&f.state!=="excluded"?`<button class="btn sm" data-act="log"')
 rep('S.me={id:me.id,name:me.name||""};','S.me={id:me.id,name:me.name||"",email:me.email||""};')

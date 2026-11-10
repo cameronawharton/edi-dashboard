@@ -1,4 +1,4 @@
-/* My work */
+/* Inspectors page (view id work) */
 .wkhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .wkhead h2{margin:2px 0;font:700 26px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
 .wkhead select{max-width:100%}
@@ -48,3 +48,5 @@ button.wkfac:hover b{text-decoration:underline}
 .calmobile{display:none}
 .calmw{display:flex;gap:8px;align-items:center;cursor:pointer}
 @media (max-width:760px){.calgantt{display:none}.calmobile{display:block}}
+.wkpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wkpick .wkacts{display:flex;gap:6px}

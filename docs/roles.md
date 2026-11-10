@@ -1,5 +1,7 @@
 # EDI role views: decisions from the Nov 3, 2026 interview
 
+> **Superseded Nov 10 2026 (Cameron):** the app is a supervisory and management tool, not a daily tool for inspectors. Only chief, captain, lieutenants, sergeants and managers use it. The "Employee (inspector)" and "Inspector interview" sections below are history: inspectors get their follow-ups and ER fixes from their sergeant's "Send list" email on the Inspectors page. The supervisor and stakeholder sections still stand.
+
 Rule that governs everything: all work is entered in Emergency Reporting (ER). The dashboard reads ER exports, action-code reports and Outlook calendars. Nobody keys work into the dashboard.
 
 ## Employee (inspector)

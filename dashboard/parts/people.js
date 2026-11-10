@@ -37,7 +37,7 @@ function orgTree(){ const act=Object.entries(S.team).filter(([,t])=>t.active!==f
 const appBuild=()=>!!window.EDI_CONFIG;
 const myEmail=()=>String((S.me&&(S.me.email||S.me.name))||"").toLowerCase();
 function autoLink(){ if(!appBuild()||S.ui._autolinked||!S.me.id||!S.canWrite||myTeamMember()||!Object.keys(S.team).length) return; S.ui._autolinked=true;
-  const hit=Object.entries(S.team).find(([,t])=>t.emailLc&&t.emailLc===myEmail()&&!t.userId); if(hit) claimProfile(hit[0]); }
+  const hit=Object.entries(S.team).find(([,t])=>t.emailLc&&t.emailLc===myEmail()&&!t.userId&&isLeaderRole(t)); if(hit) claimProfile(hit[0]); }
 const divOf=t=>(t&&t.division)||"education";
 const HOURS_TARGET=6.5; // average hours worked per day the bureau expects at minimum
 /* supervisors exempt from the hours target (Nov 4 2026): team.hoursExempt. Their hours still show, without a target */
@@ -57,13 +57,14 @@ const canLogFor=id=>S.canWrite&&!!myTeamMember()&&(myTeamMember().id===id||["cap
 function meChipHTML(){ if(S.offline||!S.ready) return ""; const m=myTeamMember();
   if(m) return `${avatar(m.id,30)}<span class="mc-t"><b>${esc(memberName(m.id))}</b><small>${esc(roleOf(m).label)}${m.unit?` · ${esc(m.unit)}`:""}</small></span>`;
   return `<span class="av empty" style="--s:30px" aria-hidden="true">?</span><span class="mc-t"><b>Choose your profile</b><small>${S.me.name?`Signed in as ${esc(S.me.name)}`:"Signed in"}</small></span>`; }
-function openClaim(){ const mine=myTeamMember(); const list=Object.entries(S.team).filter(([,t])=>t.active!==false).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role||"inspector")-ROLE_ORDER.indexOf(b[1].role||"inspector"))||a[1].name.localeCompare(b[1].name));
+function openClaim(){ const mine=myTeamMember(); const list=Object.entries(S.team).filter(([,t])=>t.active!==false&&isLeaderRole(t)).sort((a,b)=>(ROLE_ORDER.indexOf(a[1].role||"inspector")-ROLE_ORDER.indexOf(b[1].role||"inspector"))||a[1].name.localeCompare(b[1].name));
   openModal(`<div class="mh"><h2>Who is signed in?</h2><button class="btn sm ghost" data-close="1" type="button" aria-label="Close">✕</button></div><div class="mb">
     <p class="muted" style="margin:0">${appBuild()?`You are signed in as <b>${esc(myEmail()||"this account")}</b>. Your profile links on its own when this address matches the county email on file.`:`You are signed in to Claude as <b>${esc(S.me.name||"this account")}</b>. Pick your profile once and this account stays linked to it: your name shows at the top of every page and the inspections and activity you log are credited to you.`}</p>
     <div class="claimgrid">${list.map(([id,t])=>{ const taken=t.userId&&t.userId!==S.me.id; const me=t.userId===S.me.id;
       return `<button class="claimcard ${me?"on":""}" type="button" ${taken||mine?"disabled":`data-act="claim" data-team="${esc(id)}"`}>${avatar(id,64)}<b>${esc(memberName(id))}</b><small>${esc(roleOf(t).label)}</small><span class="faint" style="font-size:11.5px">${me?"You":taken?"Already linked":"Select"}</span></button>`; }).join("")}</div>
     ${mine?`<p class="faint" style="margin:0;font-size:12.5px">This account is linked to ${esc(memberName(mine.id))}. To switch, open your profile and choose “Not me”.</p>`:`<p class="faint" style="margin:0;font-size:12.5px">Not listed? Ask the captain to add you on the Team page.</p>`}</div>`,true); }
 async function claimProfile(id){ if(myTeamMember()) return; const t=S.team[id]; if(!t||(t.userId&&t.userId!==S.me.id)) return;
+  if(!isLeaderRole(t)){ flash("Sign-in is for supervisors and command staff."); return; }
   if(appBuild()&&(t.emailLc||"")!==myEmail()){ flash(`That profile belongs to ${memberName(id)}. Profiles link to the county email on file; ask Capt. Wharton if yours is wrong.`); return; }
   if(await write(()=>S.db.doc("team/"+id).update({userId:S.me.id,accountName:S.me.name||"",linkedAt:new Date().toISOString()}),`Signed in as ${memberName(id)}`)){ closeModal(); location.hash="me"; } }
 
@@ -93,12 +94,12 @@ function vPerson(M,pid){
     <div class="pid">${t.portrait||t.photo?`<img class="pportrait" src="${esc(t.portrait||t.photo)}" alt="Portrait of ${esc(t.name)}">`:avatar(id,120,"pav")}
       <div class="pname"><span class="eyebrow">${esc(R.label)}${t.unit?` · Unit ${esc(t.unit)}`:""}</span><h2>${esc(memberName(id))}</h2>${t.preferred&&t.preferred!==t.name.split(" ")[0]?`<span class="faint">${esc(t.name)}</span>`:""}
         ${t.profile&&t.profile.tagline?`<p class="ptag">${esc(t.profile.tagline)}</p>`:`<p class="ptag faint">${esc(R.about)}</p>`}
-        <div class="pchips">${self?`<span class="pill s-done">Signed in as you</span>`:t.userId?`<span class="pill s-off">Linked</span>`:`<span class="pill s-off">Not signed in yet</span>`}${!isField(t)?`<span class="tag">Oversight</span>`:""}</div></div>
+        <div class="pchips">${self?`<span class="pill s-done">Signed in as you</span>`:!isLeaderRole(t)?"":t.userId?`<span class="pill s-off">Linked</span>`:`<span class="pill s-off">Not signed in yet</span>`}${!isField(t)?`<span class="tag">Oversight</span>`:""}</div></div>
       <div class="pact">${canEditPerson(id)?`<button class="btn sm" data-act="person-edit" data-team="${esc(id)}" type="button">Edit profile</button>`:""}${self?`<button class="btn sm ghost" data-act="unclaim" data-team="${esc(id)}" type="button">Not me</button>`:""}</div></div></section>`;
   const msel=`<select id="pp-month" aria-label="Month">${months.map(m=>`<option value="${m}" ${m===month?"selected":""}>${MON3[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join("")}</select>`;
   const tiles=`<div class="pstats">
     <div><b>${P.er.length}</b><span>inspections in Emergency Reporting</span></div><div><b>${P.fail}</b><span>found hazards</span></div><div><b>${P.coi}</b><span>certificates issued</span></div>
-    ${seesHoursOf(id)?(h=>`<div><b>${h.perDay.toFixed(1)}</b><span>hours per day · ${h.total.toFixed(1)} h over ${h.days} days</span></div>`)(personHours(id,month)):""}<div><b>${P.visits.length}</b><span>school inspections this month</span></div><div><b>${actRows(month,divOf(t),id).length}</b><span>action codes entered</span></div></div>`;
+    ${!hoursExempt(id)?(h=>`<div><b>${h.perDay.toFixed(1)}</b><span>hours per day · ${h.total.toFixed(1)} h over ${h.days} days</span></div>`)(personHours(id,month)):""}<div><b>${P.visits.length}</b><span>school inspections this month</span></div><div><b>${actRows(month,divOf(t),id).length}</b><span>action codes entered</span></div></div>`;
   const insp=P.er.slice().sort((a,b)=>b.date.localeCompare(a.date));
   const inspPanel=`<section class="panel"><div class="ph"><h3>Inspections</h3><span class="faint">${ml} · from Emergency Reporting</span></div>${insp.length?`<div class="tablewrap" style="max-height:420px"><table class="t"><thead><tr><th>Date</th><th>Type</th><th>Occupancy</th><th>Result</th></tr></thead><tbody>${insp.map(r=>`<tr ${r.fac?`class="click" data-fac="${esc(r.fac)}"`:""}><td class="mono">${fmtDate(r.date)}</td><td class="faint">${esc(r.type)}</td><td>${esc(r.occ)}</td><td>${erPill(r.res)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="pb faint" style="font-size:12.5px">No Emergency Reporting import for ${ml} yet.</div>`}</section>`;
   const assigned=Object.values(M.orgStats).filter(s=>s.org.assignedTo===id&&s.active);

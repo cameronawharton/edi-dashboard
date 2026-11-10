@@ -1,13 +1,13 @@
 /* ------------------------------------------------------------------ Group views (Nov 9 2026, Cameron)
    Each group gets its own Overview: County (FSS / County), Schools (CO/ED Education) and General Occupancies.
-   Leaders switch groups with chips; field members see their own group. Also: the Today schedule from a calendar
-   export (.ics), season-to-date stats on My work, and the Feedback page (suggestions and bugs sent to the owner). */
+   Leaders switch groups with chips and start on their own group. Also: the Today schedule from a calendar
+   export (.ics), season-to-date stats on the Inspectors page, and the Feedback page (suggestions and bugs sent to the owner). */
 const GROUPS={schools:{label:"Schools",divs:["education"]},county:{label:"County",divs:["county"]},general:{label:"General Occupancies",divs:["general"]}};
 const groupOfDiv=d=>d==="county"?"county":d==="general"?"general":"schools";
 const groupOf=t=>t?groupOfDiv(divOf(t)):null;
 const appOwner=()=>appBuild()?((window.EDI_CONFIG.owners||[]).map(x=>String(x).toLowerCase()).includes(myEmail())):amCaptain();
 S.ui.ovGroup=S.ui.ovGroup||null;
-const viewGroup=()=>{ const me=myTeamMember(); if(fieldUser()) return groupOf(me); return S.ui.ovGroup||(me&&["education","county","general"].includes(divOf(me))?groupOf(me):"schools"); };
+const viewGroup=()=>{ const me=myTeamMember(); return S.ui.ovGroup||(me&&["education","county","general"].includes(divOf(me))?groupOf(me):"schools"); };
 /* latest month with Emergency Reporting or action-code data for a set of divisions */
 function latestMonthFor(divs){ const ms=Object.values(S.er).filter(d=>divs.includes(d.division||"education")).map(d=>d.month).concat(Object.values(S.actions).filter(d=>divs.includes(memDiv(d.member))).map(d=>d.month)); return ms.sort().pop()||null; }
 const monLabel=m=>m?`${MONTHS_FULL[+m.slice(5)-1]} ${m.slice(0,4)}`:"";
@@ -46,13 +46,13 @@ function todayPanel(group,personId){ const sc=S.sched[group]; const today=todayI
   const up=isSupervisor()?`<label class="btn sm" style="margin-left:auto">Upload calendar<input type="file" accept=".ics,text/calendar" data-schedup="${group}" hidden></label>`:"";
   return `<section class="panel"><div class="ph"><h3>Today</h3><span class="faint">${wkDate(today,true)}</span>${up}</div><div class="pb">
     ${!sc?`<p style="margin:0">No calendar loaded for ${esc(GROUPS[group].label)} yet.${isSupervisor()?" In Outlook, save the team calendar as an .ics file (File > Save Calendar), then upload it here.":" A supervisor loads the team calendar here."}</p>`
-    :`${tod.length?`<ul class="glist">${tod.map(row).join("")}</ul>`:`<p style="margin:0">${personId?"Nothing on the team calendar with your name today.":"Nothing on the team calendar today."}</p>`}
+    :`${tod.length?`<ul class="glist">${tod.map(row).join("")}</ul>`:`<p style="margin:0">${personId?`Nothing on the team calendar for ${esc(memberName(personId,"first"))} today.`:"Nothing on the team calendar today."}</p>`}
       ${next.length?`<div class="eyebrow" style="margin-top:12px">Coming up</div><ul class="glist">${next.map(e=>`<li><span class="mono gtime">${wkDate(e.d)}</span><span class="gev"><b>${esc(e.t)}</b><small>${e.s?e.s:"All day"}${e.l?" · "+esc(e.l):""}</small></span></li>`).join("")}</ul>`:""}
       <p class="method" style="margin:10px 0 0">From ${esc(sc.file||"a calendar export")}, loaded ${wkDate(sc.uploadedAt.slice(0,10))}${sc.by&&S.team[sc.by]?` by ${esc(memberName(sc.by))}`:""}. A live Outlook feed replaces this upload when county IT connects it.</p>`}
   </div></section>`; }
 
 /* ---------- Overview by group */
-function groupChips(g){ if(fieldUser()) return ""; return `<div class="chips" style="margin-bottom:14px">${Object.entries(GROUPS).map(([k,v])=>`<button class="chip" type="button" data-ovgroup="${k}" aria-pressed="${g===k}">${v.label}</button>`).join("")}</div>`; }
+function groupChips(g){ return `<div class="chips" style="margin-bottom:14px">${Object.entries(GROUPS).map(([k,v])=>`<button class="chip" type="button" data-ovgroup="${k}" aria-pressed="${g===k}">${v.label}</button>`).join("")}</div>`; }
 function snapshot(divs,title){ const m=latestMonthFor(divs); if(!m) return `<section class="panel"><div class="ph"><h3>${title}</h3></div><div class="pb"><p style="margin:0">No Emergency Reporting or action-code uploads yet.</p></div></section>`;
   const rows=Object.values(S.er).filter(d=>d.month===m&&divs.includes(d.division||"education")).flatMap(d=>d.rows.map(erLive));
   const acts=divs.reduce((s,dv)=>s+actRows(m,dv).length,0); const people=new Set(Object.values(S.er).filter(d=>d.month===m&&divs.includes(d.division||"education")).map(d=>d.inspector)).size;
@@ -74,7 +74,8 @@ function ovSchools(M){ const W=S.windows[M.Y], today=todayISO(); const ids=edFie
   const due=M.facs.filter(f=>f.org&&f.state!=="excluded"&&!f.visited&&ids.includes(f.org.assignedTo)); const all=M.facs.filter(f=>f.org&&f.state!=="excluded"&&ids.includes(f.org.assignedTo));
   const byOrg={}; due.forEach(f=>{ (byOrg[f.orgId]=byOrg[f.orgId]||{o:f.org,n:0}).n++; });
   const prj=Object.entries(S.projects||{}).map(([id,p])=>Object.assign({id},p)).filter(p=>!/complete|closed|done/i.test(p.phase||""));
-  return `<div class="gcols"><div class="gmain">
+  const am=latestMonthFor(["education"]);
+  return `${am?attentionPanel(am,"education",true):""}<div class="gcols"><div class="gmain">
     ${behind.length?`<div class="notice bad"><b>${behind.length} district window${behind.length>1?"s are":" is"} behind schedule.</b> ${behind.map(x=>`<a href="#" data-calblk="${esc(x.id)}|${x.bi}">${esc(x.b.label)} (${esc(memberName(x.id,"first"))}, ${x.P.n-x.P.done} left)</a>`).join(" · ")}</div>`:""}
     <section class="panel"><div class="ph"><h3>This week</h3><span class="faint">${wk&&wk.br?esc(wk.br)+": open for catch-up":"District each inspector is working"}</span><a class="faint" href="#calendar" style="margin-left:auto;font-size:12.5px">Inspection calendar</a></div>
       <div class="pb" style="padding:0;overflow-x:auto"><table class="tbl"><thead><tr><th>Inspector</th><th>District this week</th><th class="r">Done</th><th>Status</th><th class="r">Left this season</th></tr></thead><tbody>${rows}</tbody></table></div></section>
@@ -94,9 +95,12 @@ function ovCounty(M){ const today=todayISO(), m=+today.slice(5,7); const I=cfacI
   const done=f=>(I[f.id]||[]).some(r=>r.date.slice(0,7)===today.slice(0,7));
   const sys=f=>{ const s=f.systems||{}; return [s.fireAlarm&&"Fire alarm",s.sprinkler&&"Sprinkler",s.suppression&&"Suppression",s.kitchenHood&&"Kitchen hood",s.standpipes&&"Standpipes",f.bda==="yes"&&"BDA"].filter(Boolean); };
   const bRow=(f,kind)=>`<li><button class="wkfac" type="button" data-cfac="${esc(f.id)}"><b>${esc(f.name)}</b><small>${kind} · ${f.fss&&S.team[f.fss]?esc(memberName(f.fss)):"No owner"}${f.monthsReview?' · <span class="mrev">month to review</span>':""}${sys(f).length?" · "+sys(f).join(", "):""}</small></button>${done(f)?'<span class="pill s-done">Done</span>':""}</li>`;
-  const fuRows=fu.slice(0,12).map(x=>`<li><span class="gev"><b>${esc(x.r.occ)}</b><small>${esc(memberName(x.id))} · failed ${wkDate(x.r.date)} · ${x.due?(x.st==="overdue"?"overdue since ":"due ")+wkDate(x.due):"no next date in ER yet"}</small></span><span class="pill ${x.st==="unknown"?"s-due":FU_ST[x.st][1]}">${x.st==="unknown"?"Re-inspection owed":FU_ST[x.st][0]}</span></li>`).join("");
-  return `<div class="gcols"><div class="gmain">
-    <section class="panel"><div class="ph"><h3>Re-inspections coming up</h3><span class="faint">${fu.length} open</span></div><div class="pb">${fu.length?`<ul class="glist">${fuRows}</ul>${fu.length>12?`<p class="faint" style="margin:8px 0 0;font-size:12.5px">${fu.length-12} more on each person's My work page.</p>`:""}`:'<p style="margin:0">No failed inspections waiting on a re-inspection.</p>'}</div></section>
+  const fuRecent=fu.filter(x=>x.age<=FU_OLD), fuOld=fu.length-fuRecent.length;
+  const fuRows=fuRecent.slice(0,12).map(x=>`<li><button class="wkfac" type="button" data-wkwho="${esc(x.id)}"><b>${esc(x.r.occ)}</b><small>${esc(memberName(x.id))} · failed ${wkDateY(x.r.date)} · ${x.due?(x.st==="overdue"?"overdue since ":"due ")+wkDate(x.due):"no next date in ER yet"}</small></button><span class="pill ${FU_ST[x.st][1]}">${FU_ST[x.st][0]}</span></li>`).join("");
+  const am=latestMonthFor(["county"]);
+  return `${am?attentionPanel(am,"county",true):""}<div class="gcols"><div class="gmain">
+    <section class="panel"><div class="ph"><h3>Re-inspections owed</h3><span class="faint">${fuRecent.length} from the last 6 months</span></div><div class="pb">${fuRecent.length?`<ul class="glist">${fuRows}</ul>`:'<p style="margin:0">No failed inspections from the last 6 months waiting on a re-inspection.</p>'}
+      ${fuRecent.length>12||fuOld?`<p class="faint" style="margin:8px 0 0;font-size:12.5px">${fuRecent.length>12?`${fuRecent.length-12} more recent. `:""}${fuOld?`${fuOld} older than 6 months were never re-inspected in ER. `:""}Each person's full list is under <a href="#work">Inspectors</a>.</p>`:""}</div></section>
     <section class="panel"><div class="ph"><h3>Due in ${MONTHS_FULL[m-1]}</h3><span class="faint">${ann.length} annual · ${semi.length} semi-annual</span><a class="faint" href="#county" style="margin-left:auto;font-size:12.5px">County facilities</a></div><div class="pb">
       ${ann.length||semi.length?`<ul class="glist">${ann.map(f=>bRow(f,"Annual")).join("")}${semi.map(f=>bRow(f,"Semi-annual")).join("")}</ul>`:'<p style="margin:0">Nothing is due this month.</p>'}
       <p class="method" style="margin:8px 0 0">${bl.filter(f=>f.monthsReview).length} buildings still have inspection months to review, so this list grows as owners set them.</p></div></section>
@@ -110,9 +114,9 @@ function ovGeneral(M){ const ppl=Object.entries(S.team).filter(([,t])=>t.active!
     ${card("East · Sgt. Lawhorn",sec("East"))}${card("West · Sgt. Kveton",sec("West"))}
   </div><div class="gside">${todayPanel("general")}${snapshot(["general"],"General Occupancies this month")}</div></div>`; }
 
-/* ---------- My work: everything uploaded so far, by month */
+/* ---------- Inspectors page: everything uploaded so far, by month */
 function wkSeason(id){ const ms=workMonths(id).slice().sort(); if(!ms.length) return "";
-  const self=seesHoursOf(id)&&!hoursExempt(id);
+  const self=!hoursExempt(id);
   const row=m=>{ const rows=Object.values(S.er).filter(d=>d.month===m&&d.inspector===id).flatMap(d=>d.rows.map(erLive)); const a=actRows(m,memDiv(id),id).length; const h=self?personHours(id,m):null;
     return {m,n:rows.length,f:rows.filter(r=>r.res==="fail").length,c:rows.filter(r=>r.coi).length+rows.filter(r=>r.res==="conditional").length,a,h:h?h.perDay:null}; };
   const R=ms.map(row), T=R.reduce((s,r)=>({n:s.n+r.n,f:s.f+r.f,c:s.c+r.c,a:s.a+r.a}),{n:0,f:0,c:0,a:0});
@@ -123,14 +127,14 @@ function wkSeason(id){ const ms=workMonths(id).slice().sort(); if(!ms.length) re
 /* ---------- Feedback */
 S.feedback=S.feedback||{}; S.ui.fbSent=S.ui.fbSent||[];
 const FB_TYPES=["Suggestion","Bug","Data correction"], FB_ST={new:"New",considering:"Considering",done:"Done",no:"Not now"};
-function vFeedback(){ const me=myTeamMember(); const signed=!!S.me.id&&S.canWrite;
+function vFeedback(){ const me=myTeamMember(); const signed=!!S.me.id&&S.canWrite&&isSupervisor();
   const form=signed?`<section class="panel"><div class="ph"><h3>Send a suggestion or report a problem</h3></div><div class="pb">
       <form id="fbform" class="fbform"><div class="fbrow"><label>Type<select name="type">${FB_TYPES.map(t=>`<option>${t}</option>`).join("")}</select></label>
       <label>Page<select name="page">${VIEWS.filter(v=>v[0]!=="feedback").map(v=>`<option value="${v[0]}" ${v[0]===S.ui.fbFrom?"selected":""}>${esc(v[1])}</option>`).join("")}</select></label></div>
       <label>What should change, or what went wrong?<textarea name="text" rows="5" maxlength="3000" required placeholder="Plain words are fine. For a problem, say what you clicked and what you expected."></textarea></label>
       <button class="btn primary" type="submit">Send</button></form>
       ${S.ui.fbSent.length?`<p class="faint" style="margin:10px 0 0;font-size:12.5px">Sent this visit: ${S.ui.fbSent.length}. Capt. Wharton reviews every one.</p>`:""}</div></section>`
-    :`<section class="panel"><div class="pb"><p style="margin:0">Sign in with your county email (bottom left, "Sign in to edit") to send suggestions and problem reports.</p></div></section>`;
+    :`<section class="panel"><div class="pb"><p style="margin:0">${S.me.id&&!isSupervisor()?"Feedback comes from supervisors and command staff. Your county email is not linked to a supervisor profile; ask Capt. Wharton if that is wrong.":'Supervisors and command staff: sign in with your county email (bottom left, "Sign in to edit") to send suggestions and problem reports.'}</p></div></section>`;
   const list=Object.entries(S.feedback).map(([id,f])=>Object.assign({id},f)).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
   const inbox=appOwner()?`<section class="panel"><div class="ph"><h3>Everything sent in</h3><span class="faint">${list.filter(f=>(f.status||"new")==="new").length} new · ${list.length} total</span><button class="btn sm" type="button" data-act="fb-export" style="margin-left:auto">Export for Claude</button></div><div class="pb">
       ${list.length?`<ul class="glist">${list.map(f=>`<li class="fbitem"><span class="gev"><b>${esc(f.type||"Suggestion")} · ${esc((VIEWS.find(v=>v[0]===f.page)||[0,f.page||""])[1])}</b><span class="fbtext">${esc(f.text||"")}</span><small>${esc(f.name||f.email||"")} · ${wkDate(String(f.at).slice(0,10))}</small></span>
@@ -139,6 +143,7 @@ function vFeedback(){ const me=myTeamMember(); const signed=!!S.me.id&&S.canWrit
   return `<div class="sechead"><p class="muted" style="margin:0;max-width:70ch">Ideas, problems and wrong numbers all go to Capt. Wharton, who reviews them and decides what changes in the app.</p></div>${form}${inbox}`; }
 
 document.addEventListener("click",e=>{ const g=e.target.closest("[data-ovgroup]"); if(g){ S.ui.ovGroup=g.dataset.ovgroup; render(); return; }
+  const ww=e.target.closest("[data-wkwho]"); if(ww){ S.ui.work.who=ww.dataset.wkwho; S.ui.work.month=null; location.hash="work"; return; }
   if(e.target.closest('[data-act="fb-export"]')){ const items=Object.entries(S.feedback).map(([id,f])=>Object.assign({id},f)); saveFile(`insight-feedback-${todayISO()}.json`,JSON.stringify({exported:new Date().toISOString(),items},null,1)); } });
 document.addEventListener("change",async e=>{ const t=e.target;
   if(t.matches("[data-schedup]")&&t.files[0]){ await uploadSchedule(t.dataset.schedup,t.files[0]); t.value=""; }

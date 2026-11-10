@@ -2,9 +2,8 @@
 S.flags=S.flags||{};
 const SUP_ROLES=["chief","captain","lieutenant","manager","sergeant"];
 const isSupervisor=()=>{ const m=myTeamMember(); return !!(m&&SUP_ROLES.includes(m.role)); };
-/* a signed-in inspector or specialist: trimmed nav, lands on My work, sees only their own hours. Cosmetic until the app move gives real sign-in */
-const fieldUser=()=>{ const m=myTeamMember(); return !!m&&isField(m)&&!SUP_ROLES.includes(m.role); };
-const seesHoursOf=id=>{ const m=myTeamMember(); return !m||!fieldUser()||m.id===id; };
+/* Nov 10 2026: a supervisory and management tool. Only these roles sign in; inspectors and specialists have no account */
+const isLeaderRole=t=>!!t&&SUP_ROLES.includes(t.role);
 const FLAGGED=["longer","shorter","place","noday"];
 /* a stable id for an assist entry, so an explanation survives a reupload of the same entry */
 function flagId(a){ let h=0; const s=String(a.desc||""); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
@@ -28,13 +27,15 @@ document.addEventListener("click",async e=>{ const t=e.target;
   const sv=t.closest("[data-flagsave]"); if(sv){ const note=($("#flagnote").value||"").trim(); if(!note){ flash("Write a short explanation first."); return; } const id=sv.dataset.flagsave;
     const ok=await saveFlag(id,Object.assign(S.flags[id]?{}:{month:id.slice(0,7),member:sv.dataset.mem},{note,noteBy:(myTeamMember()||{}).id||S.me.id||null,noteAt:new Date().toISOString(),status:"explained",reviewBy:null,reviewAt:null})); if(ok) closeModal(); return; }
   const rv=t.closest("[data-flagrev]"); if(rv){ await saveFlag(rv.dataset.fid,{status:rv.dataset.flagrev,reviewBy:(myTeamMember()||{}).id||null,reviewAt:new Date().toISOString()}); return; }
-  const go=t.closest("[data-jump]"); if(go){ const el=document.getElementById(go.dataset.jump); if(el){ if(el.tagName==="DETAILS") el.open=true; el.scrollIntoView({behavior:"smooth",block:"start"}); } return; }
+  const sj=t.closest("[data-stjump]"); if(sj){ const [d,m]=sj.dataset.stjump.split("|"); S.ui.st.div=d; S.ui.st.month=m; return; }
+  const go=t.closest("[data-jump]"); if(go){ const jumpTo=id=>{ const el=document.getElementById(id); if(el){ if(el.tagName==="DETAILS") el.open=true; el.scrollIntoView({behavior:"smooth",block:"start"}); } return !!el; };
+    if(!jumpTo(go.dataset.jump)){ const host=go.closest("[data-attdiv]"); if(host){ const [d,m]=host.dataset.attdiv.split("|"); S.ui.st.div=d; S.ui.st.month=m; location.hash="stats"; setTimeout(()=>jumpTo(go.dataset.jump),400); } } return; }
   const pr=t.closest("[data-act='brief-print']"); if(pr){ window.print(); return; }
 });
 
 /* ---- weekly supervisor check */
 const haveAct=(month,div)=>actDocsFor(month,div).length>0;
-function attentionPanel(month,div){ div=div||"education"; const M=model(); const i=+month.slice(5)-1, year=+month.slice(0,4);
+function attentionPanel(month,div,fromOverview){ div=div||"education"; const M=model(); const i=+month.slice(5)-1, year=+month.slice(0,4);
   const field=Object.entries(S.team).filter(([,t])=>isField(t)&&divOf(t)===div).map(([id])=>id);
   const haveER=erDocsFor(month,div).length>0;
   const low=haveER?field.filter(id=>!hoursExempt(id)).map(id=>[id,personHours(id,month)]).filter(([,h])=>h.perDay<HOURS_TARGET).sort((a,b)=>a[1].perDay-b[1].perDay):[];
@@ -46,11 +47,11 @@ function attentionPanel(month,div){ div=div||"education"; const M=model(); const
   const lowB=low.map(([id,h])=>`<span class="attrow">${avatar(id,20)} ${esc(memberName(id))} <span class="mono">${h.perDay.toFixed(1)} h/day</span></span>`).join("");
   const flagB=`${open.length?`<span class="attrow">${open.length} with no explanation or sent back</span>`:""}${review.length?`<span class="attrow">${review.length} explained, waiting for your review</span>`:""}${[...new Set(open.map(o=>o.a.member))].map(id=>`<span class="attrow">${avatar(id,20)} ${esc(memberName(id))} <span class="mono">${open.filter(o=>o.a.member===id).length}</span></span>`).join("")}`;
   const behB=behind.slice(0,8).map(s=>`<span class="attrow click" data-org="${esc(s.id)}">${esc(s.org.name)} <span class="mono">${Math.max(1,Math.ceil((s.expected-s.coverage)*s.active))} behind</span>${s.org.assignedTo?` <span class="faint">· ${esc(memberName(s.org.assignedTo))}</span>`:` <span class="faint">· unassigned</span>`}</span>`).join("")+(behind.length>8?`<span class="faint">and ${behind.length-8} more</span>`:"");
-  return `<section class="panel"><div class="ph"><h3>Needs attention</h3><span class="faint">${MON3[i]} ${year} · weekly supervisor check</span></div><div class="pb attgrid">
+  return `<section class="panel" ${fromOverview?`data-attdiv="${esc(div)}|${esc(month)}"`:""}><div class="ph"><h3>Needs attention</h3><span class="faint">${MON3[i]} ${year} · weekly supervisor check</span>${fromOverview?`<a class="faint" href="#stats" data-stjump="${esc(div)}|${esc(month)}" style="margin-left:auto;font-size:12.5px">Monthly stats</a>`:""}</div><div class="pb attgrid">
     ${box(haveER?low.length:0,`under ${HOURS_TARGET} hours per day`,haveER?lowB:"",haveER?"hourspanel":null)}
     ${box(open.length+review.length,"assists that don't line up",flagB,"actionspanel")}
     ${box(missing.reduce((s,[,h])=>s+h.actNoH,0),"action codes with no time written (counted as 15 min)",missB,"actionspanel")}
-    ${div==="education"?box(behind.length,`districts behind pace (${M.Y})`,behB,null):""}
+    ${div==="education"&&!fromOverview?box(behind.length,`districts behind pace (${M.Y})`,behB,null):""}
     ${div==="county"?(A=>box(A.unassigned.length,"county buildings with no FSS owner",A.unassigned.slice(0,6).map(f=>`<span class="attrow">${esc(f.name)}</span>`).join("")+(A.unassigned.length>6?`<span class="faint">and ${A.unassigned.length-6} more</span>`:"")+`<a class="btn sm ghost" href="#county" style="align-self:flex-start">Open county facilities</a>`,null))(countyAttention()):""}
   </div>${haveER?"":`<p class="method" style="padding:0 16px 14px">Hours need this month's Emergency Reporting exports.</p>`}</section>`; }
 
